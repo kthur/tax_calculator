@@ -3,6 +3,75 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  const parseVal = (idOrEl) => {
+    const el = typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
+    if (!el) return 0;
+    return parseFloat(el.value.replace(/,/g, '')) || 0;
+  };
+
+  const formatNumberWithCommas = (value) => {
+    let numStr = String(value).replace(/,/g, '');
+    if (numStr === '') return '';
+    let hasMinus = numStr.startsWith('-');
+    if (hasMinus) numStr = numStr.substring(1);
+    
+    numStr = numStr.replace(/[^0-9]/g, '');
+    if (numStr === '') return hasMinus ? '-' : '';
+    
+    let formatted = parseInt(numStr, 10).toLocaleString('ko-KR');
+    return hasMinus ? '-' + formatted : formatted;
+  };
+
+  const formatInputOnEvent = (e) => {
+    const el = e.target;
+    let originalSelectionStart = el.selectionStart;
+    let originalValue = el.value;
+    
+    let commasBeforeCursor = (originalValue.substring(0, originalSelectionStart).match(/,/g) || []).length;
+    let digitsBeforeCursor = originalValue.substring(0, originalSelectionStart).replace(/[^0-9]/g, '').length;
+    let isNegativeBefore = originalValue.substring(0, originalSelectionStart).includes('-');
+    
+    let cleanVal = originalValue.replace(/,/g, '');
+    if (cleanVal === '') {
+      el.value = '';
+      return;
+    }
+    
+    let formatted = formatNumberWithCommas(cleanVal);
+    el.value = formatted;
+    
+    let newCursorPosition = 0;
+    let digitCount = 0;
+    for (let i = 0; i < formatted.length; i++) {
+      if (formatted[i] === '-') {
+        if (isNegativeBefore) newCursorPosition++;
+      } else if (formatted[i] !== ',') {
+        digitCount++;
+        newCursorPosition++;
+        if (digitCount === digitsBeforeCursor) {
+          break;
+        }
+      } else {
+        newCursorPosition++;
+      }
+    }
+    el.setSelectionRange(newCursorPosition, newCursorPosition);
+  };
+
+  const setAndFormatVal = (idOrEl, val) => {
+    const el = typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
+    if (!el) return;
+    el.value = formatNumberWithCommas(val);
+  };
+
+  // Bind input listeners to money inputs
+  document.querySelectorAll('.money-input').forEach(input => {
+    input.addEventListener('input', formatInputOnEvent);
+    if (input.value) {
+      input.value = formatNumberWithCommas(input.value);
+    }
+  });
+
   // 1. 테마 토글
   const themeToggleBtn = document.getElementById('themeToggleBtn');
   themeToggleBtn.addEventListener('click', () => {
@@ -91,10 +160,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <option value="parent">부모 (기본공제)</option>
             <option value="other">기타</option>
           </select>
-          <input type="number" class="form-input opt-dep-card" value="0" placeholder="카드사용액">
-          <input type="number" class="form-input opt-dep-medical" value="0" placeholder="의료비">
-          <input type="number" class="form-input opt-dep-edu" value="0" placeholder="교육비">
-          <input type="number" class="form-input opt-dep-student-loan" value="0" placeholder="학자금상환">
+          <input type="text" inputmode="numeric" class="form-input money-input opt-dep-card" value="0" placeholder="카드사용액">
+          <input type="text" inputmode="numeric" class="form-input money-input opt-dep-medical" value="0" placeholder="의료비">
+          <input type="text" inputmode="numeric" class="form-input money-input opt-dep-edu" value="0" placeholder="교육비">
+          <input type="text" inputmode="numeric" class="form-input money-input opt-dep-student-loan" value="0" placeholder="학자금상환">
         </div>
         <div style="display:flex; gap:15px; margin-top:5px; font-size:0.8rem;">
           <label><input type="checkbox" class="opt-dep-senior"> 경로우대(70세+)</label>
@@ -104,6 +173,10 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
     optCoupleYePeople.appendChild(card);
+
+    card.querySelectorAll('.money-input').forEach(input => {
+      input.addEventListener('input', formatInputOnEvent);
+    });
 
     card.querySelector('.btn-remove-person').addEventListener('click', () => {
       card.remove();
@@ -119,37 +192,37 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCalcIncomeIntegrated = document.getElementById('btn-calc-income-integrated');
   btnCalcIncomeIntegrated.addEventListener('click', () => {
     // 배우자 1 (남편) 기본 데이터 확보
-    const hSalary = parseFloat(document.getElementById('inc-h-salary').value) || 0;
+    const hSalary = parseVal('inc-h-salary');
     const hType = document.getElementById('inc-h-type').value;
-    const hCard = parseFloat(document.getElementById('inc-h-card').value) || 0;
-    const hYellow = parseFloat(document.getElementById('inc-h-yellow').value) || 0;
-    const hPension = parseFloat(document.getElementById('inc-h-pension').value) || 0;
+    const hCard = parseVal('inc-h-card');
+    const hYellow = parseVal('inc-h-yellow');
+    const hPension = parseVal('inc-h-pension');
 
     // 🆕 배우자 1 금융소득 상세 설정 분리 반영
-    const hFinancialGen = parseFloat(document.getElementById('inc-h-financial-gen').value) || 0;
-    const hFinancialOverseas = parseFloat(document.getElementById('inc-h-financial-overseas').value) || 0;
-    const hIsaIncome = parseFloat(document.getElementById('inc-h-isa').value) || 0;
+    const hFinancialGen = parseVal('inc-h-financial-gen');
+    const hFinancialOverseas = parseVal('inc-h-financial-overseas');
+    const hIsaIncome = parseVal('inc-h-isa');
     const hIsaType = document.getElementById('inc-h-isa-type').value;
-    const hBondSeparated = parseFloat(document.getElementById('inc-h-bond').value) || 0;
+    const hBondSeparated = parseVal('inc-h-bond');
 
     // 배우자 2 (아내) 기본 데이터 확보
-    const wSalary = parseFloat(document.getElementById('inc-w-salary').value) || 0;
+    const wSalary = parseVal('inc-w-salary');
     const wType = document.getElementById('inc-w-type').value;
-    const wCard = parseFloat(document.getElementById('inc-w-card').value) || 0;
-    const wYellow = parseFloat(document.getElementById('inc-w-yellow').value) || 0;
-    const wPension = parseFloat(document.getElementById('inc-w-pension').value) || 0;
+    const wCard = parseVal('inc-w-card');
+    const wYellow = parseVal('inc-w-yellow');
+    const wPension = parseVal('inc-w-pension');
 
     // 🆕 배우자 2 금융소득 상세 설정 분리 반영
-    const wFinancialGen = parseFloat(document.getElementById('inc-w-financial-gen').value) || 0;
-    const wFinancialOverseas = parseFloat(document.getElementById('inc-w-financial-overseas').value) || 0;
-    const wIsaIncome = parseFloat(document.getElementById('inc-w-isa').value) || 0;
+    const wFinancialGen = parseVal('inc-w-financial-gen');
+    const wFinancialOverseas = parseVal('inc-w-financial-overseas');
+    const wIsaIncome = parseVal('inc-w-isa');
     const wIsaType = document.getElementById('inc-w-isa-type').value;
-    const wBondSeparated = parseFloat(document.getElementById('inc-w-bond').value) || 0;
+    const wBondSeparated = parseVal('inc-w-bond');
 
     // 공통 투자 설정
-    const ventureInvestment = parseFloat(document.getElementById('inc-venture').value) || 0;
-    const housingSubscription = parseFloat(document.getElementById('inc-housing-sub').value) || 0;
-    const housingLoanRepay = parseFloat(document.getElementById('inc-housing-loan').value) || 0;
+    const ventureInvestment = parseVal('inc-venture');
+    const housingSubscription = parseVal('inc-housing-sub');
+    const housingLoanRepay = parseVal('inc-housing-loan');
 
     // 부양가족 데이터 수집
     const cards = optCoupleYePeople.querySelectorAll('.person-card');
@@ -158,10 +231,10 @@ document.addEventListener('DOMContentLoaded', () => {
       dependents.push({
         name: card.querySelector('.opt-dep-name').value || '무명',
         relation: card.querySelector('.opt-dep-relation').value,
-        card: parseFloat(card.querySelector('.opt-dep-card').value) || 0,
-        medical: parseFloat(card.querySelector('.opt-dep-medical').value) || 0,
-        edu: parseFloat(card.querySelector('.opt-dep-edu').value) || 0,
-        studentLoanRepay: parseFloat(card.querySelector('.opt-dep-student-loan').value) || 0,
+        card: parseVal(card.querySelector('.opt-dep-card')),
+        medical: parseVal(card.querySelector('.opt-dep-medical')),
+        edu: parseVal(card.querySelector('.opt-dep-edu')),
+        studentLoanRepay: parseVal(card.querySelector('.opt-dep-student-loan')),
         senior: card.querySelector('.opt-dep-senior').checked,
         disabled: card.querySelector('.opt-dep-disabled').checked,
         birth: card.querySelector('.opt-dep-birth').checked,
@@ -249,14 +322,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderAdvice('income-advice-list', advice, (id, val) => {
       if (id === 'income_yellow_umbrella') {
-        document.getElementById('inc-h-yellow').value = val;
+        setAndFormatVal('inc-h-yellow', val);
       } else if (id === 'income_pension') {
-        document.getElementById('inc-h-pension').value = val;
+        setAndFormatVal('inc-h-pension', val);
       } else if (id === 'income_venture_investment') {
-        document.getElementById('inc-venture').value = val;
+        setAndFormatVal('inc-venture', val);
       } else if (id === 'income_isa_switch') {
-        document.getElementById('inc-h-isa').value = val;
-        document.getElementById('inc-h-financial-gen').value = Math.max(0, hFinancialGen - val);
+        setAndFormatVal('inc-h-isa', val);
+        setAndFormatVal('inc-h-financial-gen', Math.max(0, hFinancialGen - val));
       }
       btnCalcIncomeIntegrated.click();
     });
@@ -269,13 +342,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCalcVat = document.getElementById('btn-calc-vat');
   btnCalcVat.addEventListener('click', () => {
     const type = vatTypeSelect.value;
-    const sales = parseFloat(document.getElementById('vat-sales').value) || 0;
-    const purchases = parseFloat(document.getElementById('vat-purchases').value) || 0;
+    const sales = parseVal('vat-sales');
+    const purchases = parseVal('vat-purchases');
     const businessType = document.getElementById('vat-business-type').value;
     const useAgriPurchase = checkUseAgri.checked;
-    const agriPurchaseAmount = parseFloat(document.getElementById('vat-agri-amt').value) || 0;
+    const agriPurchaseAmount = parseVal('vat-agri-amt');
     const hasCardSales = checkUseCardSales.checked;
-    const cardSalesAmount = parseFloat(document.getElementById('vat-cardsales-amt').value) || 0;
+    const cardSalesAmount = parseVal('vat-cardsales-amt');
 
     const results = TaxCalculator.calculateVAT({ 
       type, sales, purchases, businessType, useAgriPurchase, agriPurchaseAmount, hasCardSales, cardSalesAmount 
@@ -297,11 +370,11 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (id === 'vat_agri_deduction') {
         checkUseAgri.checked = true;
         checkUseAgri.dispatchEvent(new Event('change'));
-        document.getElementById('vat-agri-amt').value = 10000000;
+        setAndFormatVal('vat-agri-amt', 10000000);
       } else if (id === 'vat_card_sales_ded') {
         checkUseCardSales.checked = true;
         checkUseCardSales.dispatchEvent(new Event('change'));
-        document.getElementById('vat-cardsales-amt').value = 20000000;
+        setAndFormatVal('vat-cardsales-amt', 20000000);
       }
       btnCalcVat.click();
     });
@@ -316,8 +389,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (type === 'real_estate') {
       inputs = {
         type,
-        purchasePrice: parseFloat(document.getElementById('capital-purchase').value) || 0,
-        sellPrice: parseFloat(document.getElementById('capital-sell').value) || 0,
+        purchasePrice: parseVal('capital-purchase'),
+        sellPrice: parseVal('capital-sell'),
         holdingPeriodMonths: parseInt(document.getElementById('capital-period').value) || 0,
         houseCount: parseInt(document.getElementById('capital-houses').value) || 0
       };
@@ -325,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
       inputs = {
         type,
         stockType: document.getElementById('stock-type').value,
-        stockGain: parseFloat(document.getElementById('stock-gain').value) || 0
+        stockGain: parseVal('stock-gain')
       };
     }
 
@@ -351,8 +424,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCalcOptGs = document.getElementById('btn-calc-opt-gs');
   btnCalcOptGs.addEventListener('click', () => {
     const type = document.getElementById('opt-gs-type').value;
-    const originalPurchasePrice = parseFloat(document.getElementById('opt-gs-purchase').value) || 0;
-    const currentPrice = parseFloat(document.getElementById('opt-gs-current').value) || 0;
+    const originalPurchasePrice = parseVal('opt-gs-purchase');
+    const currentPrice = parseVal('opt-gs-current');
 
     const result = TaxOptimizer.optimizeGiftAndSell({ type, originalPurchasePrice, currentPrice });
     
