@@ -330,6 +330,27 @@ document.addEventListener('DOMContentLoaded', () => {
       } else if (id === 'income_isa_switch') {
         setAndFormatVal('inc-h-isa', val);
         setAndFormatVal('inc-h-financial-gen', Math.max(0, hFinancialGen - val));
+      } else if (id === 'income_financial_split') {
+        // [양도소득세] 대분류 탭 버튼 클릭
+        const capitalTabBtn = document.querySelector('.tab-btn[data-tab="capital"]');
+        if (capitalTabBtn) {
+          capitalTabBtn.click();
+        }
+        // 자산 이전 시뮬레이터 입력값 세팅 (주식 증여로 세팅)
+        const optGsType = document.getElementById('opt-gs-type');
+        if (optGsType) {
+          optGsType.value = 'stock';
+        }
+        // 금융소득 원금이 대략 수익률 4% 기준이라고 가정하여 환산 세팅하거나 금융소득 금액 그대로 세팅
+        // 여기선 현재 평가액을 증여하고자 하는 금융소득(예: 주식 평가액) 기준으로 세팅하도록 현재 평가액 필드에 입력
+        setAndFormatVal('opt-gs-current', val * 25); // 4% 수익률 가정 시 원금
+        setAndFormatVal('opt-gs-purchase', val * 15); // 취득가액 예시 세팅
+        
+        // 시뮬레이터 영역으로 스크롤 이동
+        const targetSection = document.getElementById('opt-gs-type');
+        if (targetSection) {
+          targetSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
       }
       btnCalcIncomeIntegrated.click();
     });
