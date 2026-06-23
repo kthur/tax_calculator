@@ -1,0 +1,536 @@
+/* ==========================================
+   🇰🇷 대한민국 종합 세금 계산기 프리미엄 스타일
+   ========================================== */
+
+/* 1. 디자인 시스템 토큰 & 리셋 */
+:root {
+  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #020617 100%);
+  --light-bg-gradient: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+  
+  --card-bg-dark: rgba(30, 41, 59, 0.45);
+  --card-bg-light: rgba(255, 255, 255, 0.7);
+  --card-border-dark: rgba(255, 255, 255, 0.08);
+  --card-border-light: rgba(0, 0, 0, 0.06);
+
+  --accent-primary: #6c63ff;     /* 로열 바이올렛 */
+  --accent-secondary: #00d4aa;   /* 에메랄드 네온 */
+  --accent-warning: #ff6b6b;     /* 코랄 레드 */
+  --accent-info: #38bdf8;        /* 스카이 블루 */
+  --accent-gold: #ffd93d;        /* 골드 옐로우 */
+  
+  --text-primary-dark: #f8fafc;
+  --text-secondary-dark: #94a3b8;
+  --text-primary-light: #0f172a;
+  --text-secondary-light: #475569;
+
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--bg-gradient);
+  color: var(--text-primary-dark);
+  min-height: 100vh;
+  transition: var(--transition-smooth);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* 라이트 모드 오버라이드 */
+body.light-mode {
+  background: var(--light-bg-gradient);
+  color: var(--text-primary-light);
+}
+
+/* 2. 공통 스크롤바 디자인 */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--accent-primary);
+  border-radius: 4px;
+}
+
+/* 3. 레이아웃 컨테이너 */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+/* 헤더 영역 */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+body.light-mode header {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.logo-text h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.logo-text p {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+/* 테마 스위치 */
+.theme-switch-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 16px;
+  border-radius: 50px;
+  color: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: var(--transition-smooth);
+}
+body.light-mode .theme-switch-btn {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+.theme-switch-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(108, 99, 255, 0.2);
+}
+
+/* 4. 네비게이션 탭 */
+.tab-navigation {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 2.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 6px;
+  border-radius: 12px;
+}
+body.light-mode .tab-navigation {
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.tab-btn {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary-dark);
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+body.light-mode .tab-btn {
+  color: var(--text-secondary-light);
+}
+
+.tab-btn.active {
+  background: var(--accent-primary);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(108, 99, 255, 0.35);
+}
+
+.tab-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary-dark);
+}
+body.light-mode .tab-btn:hover:not(.active) {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-primary-light);
+}
+
+/* 5. 메인 그리드 및 패널 */
+.calculator-panel {
+  display: none;
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.calculator-panel.active {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 2rem;
+}
+
+@media (max-width: 968px) {
+  .calculator-panel.active {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* 6. 글래스모피즘 카드 공통 */
+.input-card, .result-card {
+  background: var(--card-bg-dark);
+  border: 1px solid var(--card-border-dark);
+  border-radius: 18px;
+  padding: 2rem;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  transition: var(--transition-smooth);
+}
+body.light-mode .input-card, 
+body.light-mode .result-card {
+  background: var(--card-bg-light);
+  border: 1px solid var(--card-border-light);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+body.light-mode .card-title {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* 7. 폼 컨트롤 */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--text-secondary-dark);
+}
+body.light-mode .form-group label {
+  color: var(--text-secondary-light);
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: var(--transition-smooth);
+}
+body.light-mode .form-input {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px rgba(108, 99, 255, 0.25);
+}
+
+.input-unit {
+  position: absolute;
+  right: 16px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  opacity: 0.6;
+}
+
+/* 버튼 스타일 */
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  margin-top: 1rem;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 212, 170, 0.3);
+}
+
+/* 8. 결과 표시 UI */
+.result-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.05);
+}
+body.light-mode .result-item {
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.05);
+}
+
+.result-item.highlight {
+  border-bottom: none;
+  background: rgba(108, 99, 255, 0.1);
+  padding: 16px;
+  border-radius: 8px;
+  margin-top: 1rem;
+}
+
+.result-label {
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+
+.result-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.result-value.accent {
+  color: var(--accent-secondary);
+}
+.result-value.warning {
+  color: var(--accent-warning);
+}
+
+/* 차트 컨테이너 */
+.chart-container {
+  width: 100%;
+  max-width: 250px;
+  height: 250px;
+  margin: 1.5rem auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 9. AI 절세 추천 카드 */
+.advice-section {
+  grid-column: 1 / -1;
+  margin-top: 1rem;
+}
+
+.advice-card-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.advice-card {
+  border-radius: 12px;
+  padding: 1.25rem;
+  border-left: 5px solid transparent;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: var(--transition-smooth);
+}
+
+.advice-card.warning {
+  background: rgba(255, 107, 107, 0.08);
+  border: 1px solid rgba(255, 107, 107, 0.15);
+  border-left: 5px solid var(--accent-warning);
+}
+.advice-card.success {
+  background: rgba(0, 212, 170, 0.08);
+  border: 1px solid rgba(0, 212, 170, 0.15);
+  border-left: 5px solid var(--accent-secondary);
+}
+.advice-card.info {
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  border-left: 5px solid var(--accent-info);
+}
+
+.advice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.advice-title {
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.advice-saving {
+  font-size: 0.8rem;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.advice-desc {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-bottom: 12px;
+}
+
+.advice-action-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: inherit;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+.advice-action-btn:hover {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #fff;
+}
+
+/* 10. 절세 시뮬레이터(다인원 추가) 관련 UI */
+.optimizer-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.opt-tab-btn {
+  flex: 1;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: inherit;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+body.light-mode .opt-tab-btn {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+.opt-tab-btn.active {
+  background: var(--accent-secondary);
+  color: #0f172a;
+}
+
+.people-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.person-card {
+  background: rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 12px 16px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+body.light-mode .person-card {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.person-name {
+  font-weight: bold;
+  font-size: 0.9rem;
+  min-width: 60px;
+}
+
+.person-details {
+  flex: 1;
+  display: flex;
+  gap: 8px;
+}
+
+.person-input {
+  max-width: 140px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+}
+
+.btn-remove-person {
+  background: transparent;
+  border: none;
+  color: var(--accent-warning);
+  font-weight: bold;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.btn-add-person {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  color: inherit;
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+}
+.btn-add-person:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--accent-primary);
+}
+
+/* 11. 애니메이션 효과 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
