@@ -471,6 +471,16 @@ document.addEventListener('DOMContentLoaded', () => {
       alert("⚠️ 소득금액은 0원 이상이어야 합니다.");
       return;
     }
+
+    // ISA 서민형 자격 검증
+    if (hIsaType === 'sub' && hSalary > 50000000 && hType === 'wage') {
+      alert("⚠️ 배우자 1의 총급여가 5,000만 원을 초과하여 ISA 서민형(1,000만) 자격이 없습니다. 일반형(500만)을 선택해 주세요.");
+      return;
+    }
+    if (wIsaType === 'sub' && wSalary > 50000000 && wType === 'wage') {
+      alert("⚠️ 배우자 2의 총급여가 5,000만 원을 초과하여 ISA 서민형(1,000만) 자격이 없습니다. 일반형(500만)을 선택해 주세요.");
+      return;
+    }
     if (hCard < 0 || wCard < 0 || hYellow < 0 || wYellow < 0 || hPension < 0 || wPension < 0 ||
         hFinancialGen < 0 || hFinancialOverseas < 0 || hIsaIncome < 0 || hBondSeparated < 0 ||
         wFinancialGen < 0 || wFinancialOverseas < 0 || wIsaIncome < 0 || wBondSeparated < 0 ||
@@ -769,6 +779,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // 증여 대상 자산 변경 시 주식 경고문 토글
+  document.getElementById('opt-gs-type').addEventListener('change', function() {
+    document.getElementById('gs-stock-warning').style.display = this.value === 'stock' ? 'block' : 'none';
+  });
+  // 초기 상태
+  if (document.getElementById('opt-gs-type').value === 'stock') {
+    document.getElementById('gs-stock-warning').style.display = 'block';
+  }
+
   // 4. 자산 이전 절세 시뮬레이션
   const btnCalcOptGs = document.getElementById('btn-calc-opt-gs');
   btnCalcOptGs.addEventListener('click', () => {
@@ -808,6 +827,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <p style="font-size:0.75rem; opacity:0.7; margin-top:8px; line-height:1.3;">
         * 증여재산가액 한도 6억 원을 적용한 취득가액 갱신 시뮬레이션입니다. ${warningDetail}
       </p>
+      ${type === 'stock' ? '<p style="font-size:0.7rem; margin-top:6px; padding:6px 8px; background:rgba(255,107,107,0.08); border-radius:4px; line-height:1.4; color:var(--accent-warning);">⚠️ 해외주식 증여 후 <strong>1년 이내 매도</strong>하고 양도소득이 실질적으로 증여자에게 귀속되면 <strong>부당행위계산부인</strong>이 적용될 수 있습니다. 증여 후 자금이 증여자 계좌로 환류되지 않도록 주의하세요.</p>' : ''}
     `;
   });
 
