@@ -871,7 +871,7 @@ function renderAdvice(containerId, adviceList, actionCallback) {
 
   if (adviceList.length === 0) {
     container.innerHTML = `
-      <div style="grid-column:1/-1; text-align:center; padding: 1.5rem; opacity:0.6; font-size:0.85rem;">
+      <div style="text-align:center; padding: 1.5rem; opacity:0.6; font-size:0.85rem;">
         🎉 이미 스마트한 절세 비율을 만족하고 계십니다!
       </div>
     `;
@@ -880,7 +880,20 @@ function renderAdvice(containerId, adviceList, actionCallback) {
 
   adviceList.sort((a, b) => b.saving - a.saving);
 
-  adviceList.forEach(item => {
+  const totalSlides = adviceList.length;
+  let currentSlide = 0;
+
+  const carousel = document.createElement('div');
+  carousel.className = 'advice-carousel';
+
+  const track = document.createElement('div');
+  track.className = 'advice-carousel-track';
+
+  adviceList.forEach((item, index) => {
+    const slide = document.createElement('div');
+    slide.className = 'advice-carousel-slide';
+    slide.style.display = index === 0 ? 'block' : 'none';
+
     const card = document.createElement('div');
     card.className = `advice-card ${item.type}`;
     card.innerHTML = `
@@ -898,6 +911,56 @@ function renderAdvice(containerId, adviceList, actionCallback) {
       });
     }
 
-    container.appendChild(card);
+    slide.appendChild(card);
+    track.appendChild(slide);
   });
+
+  carousel.appendChild(track);
+
+  function showSlide(index) {
+    const slides = track.querySelectorAll('.advice-carousel-slide');
+    slides.forEach(s => s.style.display = 'none');
+    currentSlide = (index + totalSlides) % totalSlides;
+    slides[currentSlide].style.display = 'block';
+    const dots = carousel.querySelectorAll('.advice-carousel-dot');
+    dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
+    const counter = carousel.querySelector('.advice-carousel-counter');
+    if (counter) counter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+  }
+
+  const nav = document.createElement('div');
+  nav.className = 'advice-carousel-nav';
+
+  const prevBtn = document.createElement('button');
+  prevBtn.className = 'advice-carousel-btn';
+  prevBtn.innerHTML = '&#9664;';
+  prevBtn.setAttribute('aria-label', '이전 가이드');
+  prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
+
+  const dotsContainer = document.createElement('div');
+  dotsContainer.className = 'advice-carousel-dots';
+  for (let i = 0; i < totalSlides; i++) {
+    const dot = document.createElement('span');
+    dot.className = `advice-carousel-dot${i === 0 ? ' active' : ''}`;
+    dot.addEventListener('click', () => showSlide(i));
+    dotsContainer.appendChild(dot);
+  }
+
+  const counter = document.createElement('span');
+  counter.className = 'advice-carousel-counter';
+  counter.textContent = `1 / ${totalSlides}`;
+
+  const nextBtn = document.createElement('button');
+  nextBtn.className = 'advice-carousel-btn';
+  nextBtn.innerHTML = '&#9654;';
+  nextBtn.setAttribute('aria-label', '다음 가이드');
+  nextBtn.addEventListener('click', () => showSlide(currentSlide + 1));
+
+  nav.appendChild(prevBtn);
+  nav.appendChild(counter);
+  nav.appendChild(dotsContainer);
+  nav.appendChild(nextBtn);
+  carousel.appendChild(nav);
+
+  container.appendChild(carousel);
 }
