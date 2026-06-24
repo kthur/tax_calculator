@@ -290,6 +290,76 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // ✅ PDF 업로드 — 홈택스 자동 입력
+  const dropzone = document.getElementById('pdf-dropzone');
+  const fileInput = document.getElementById('pdf-file-input');
+  const pdfStatus = document.getElementById('pdf-status');
+
+  dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('dragover'); });
+  dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('dragover'); });
+  dropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropzone.classList.remove('dragover');
+    if (e.dataTransfer.files.length > 0) processPDF(e.dataTransfer.files[0]);
+  });
+  fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) processPDF(e.target.files[0]);
+  });
+
+  async function processPDF(file) {
+    if (file.type !== 'application/pdf') { alert('PDF 파일만 업로드 가능합니다.'); return; }
+    pdfStatus.style.display = 'block';
+    pdfStatus.innerHTML = '⏳ PDF 분석 중...';
+    try {
+      const buffer = await file.arrayBuffer();
+      const typedarray = new Uint8Array(buffer);
+      const pdfjsLib = window.pdfjsLib;
+      if (!pdfjsLib) { pdfStatus.innerHTML = '❌ PDF 라이브러리를 불러올 수 없습니다. 인터넷 연결을 확인하세요.'; return; }
+      const pdf = await pdfjsLib.getDocument(typedarray).promise;
+      let extractedText = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const tc = await page.getTextContent();
+        extractedText += tc.items.map(item => item.str).join(' ') + '\n';
+      }
+      const filled = parseAndFillFields(extractedText);
+      if (filled > 0) {
+        pdfStatus.innerHTML = `✅ PDF 분석 완료! <strong>${filled}개 항목</strong>이 자동 입력되었습니다. 값을 확인해 주세요.`;
+        pdfStatus.style.color = 'var(--accent-secondary)';
+        document.querySelectorAll('.money-input').forEach(el => { if (el.value) el.value = formatNumberWithCommas(el.value); });
+      } else {
+        pdfStatus.innerHTML = '⚠️ 텍스트를 추출했으나 인식된 세금 항목이 없습니다. 암호가 없는 PDF인지 확인해 주세요.';
+        pdfStatus.style.color = 'var(--accent-warning)';
+      }
+    } catch (err) {
+      console.error(err);
+      pdfStatus.innerHTML = '❌ PDF를 읽을 수 없습니다. 암호(생년월일)가 걸려있다면 홈택스에서 암호 없이 재다운로드하세요.';
+      pdfStatus.style.color = 'var(--accent-warning)';
+    }
+  }
+
+  function parseAndFillFields(text) {
+    const clean = text.replace(/\s+/g, ' ');
+    let count = 0;
+    const mappings = [
+      [/총급여액\s*:?\s*\[?([\d,]+)\]?/, 'inc-h-salary'],
+      [/종합소득금액\s*:?\s*\[?([\d,]+)\]?/, 'inc-h-salary'],
+      [/신용카드\s*사용액\s*:?\s*\[?([\d,]+)\]?/, 'inc-h-card'],
+      [/연금저축\s*(?:납입액|계약)\s*:?\s*\[?([\d,]+)\]?/, 'inc-h-pension'],
+      [/(?:보장성\s*보험료|보험료)\s*:?\s*\[?([\d,]+)\]?/, null],
+      [/의료비\s*:?\s*\[?([\d,]+)\]?/, null],
+      [/교육비\s*:?\s*\[?([\d,]+)\]?/, null]
+    ];
+    for (const [regex, id] of mappings) {
+      const match = clean.match(regex);
+      if (match && id) {
+        const el = document.getElementById(id);
+        if (el) { el.value = match[1].replace(/,/g, ''); el.style.background = 'rgba(0,212,170,0.15)'; count++; }
+      }
+    }
+    return count;
+  }
+
   // 1. 테마 토글
   const themeToggleBtn = document.getElementById('themeToggleBtn');
   themeToggleBtn.addEventListener('click', () => {

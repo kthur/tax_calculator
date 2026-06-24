@@ -44,6 +44,18 @@
       <!-- Left Area: 통합 입력 폼 -->
       <div class="input-card">
         <h2 class="card-title">💵 종합소득세 &amp; 연말정산 통합 입력</h2>
+
+        <!-- 📄 홈택스 PDF 드롭존 -->
+        <div id="pdf-dropzone" class="pdf-dropzone">
+          <div class="pdf-dropzone-content">
+            <span class="pdf-dropzone-icon">📄</span>
+            <h3>홈택스 PDF로 자동 입력</h3>
+            <p>종합소득세 신고서 또는 연말정산 간소화 PDF를 여기에 끌어다 놓으세요.</p>
+            <label for="pdf-file-input" class="pdf-upload-btn">파일 선택하기</label>
+            <input type="file" id="pdf-file-input" accept=".pdf" style="display:none;">
+          </div>
+          <div id="pdf-status" style="display:none; margin-top:8px; font-size:0.82rem;"></div>
+        </div>
         
         <!-- 부부 소득 및 개별 금융소득 입력 영역 -->
         <div class="grid-2col" style="display:grid; gap:15px; margin-bottom:1.5rem;">
@@ -555,6 +567,10 @@
   </footer>
 
   <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
+  </script>
   <script src="tax-calculator.js"></script>
   <script src="optimizer.js"></script>
   <script src="advisor.js"></script>
