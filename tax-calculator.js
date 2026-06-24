@@ -680,3 +680,92 @@ TaxCalculator.calculatePensionOptimization = function(opts) {
     reachedLimit: currentTotal >= MAX_LIMIT
   };
 };
+
+// ──────────────────────────────────────────────
+// 신용카드 vs 체크카드 황금비율 계산기
+// ──────────────────────────────────────────────
+/**
+ * @param {Object} opts
+ * @param {number} opts.totalSalary   — 총급여
+ * @param {number} opts.cardUsage     — 현재까지 신용카드 사용액
+ * @param {number} opts.cashUsage     — 현재까지 체크카드/현금 사용액
+ * @returns {Object}
+ */
+TaxCalculator.calculateCardOptimalMix = function(opts) {
+  var totalSalary = opts.totalSalary || 0;
+  var cardUsage = opts.cardUsage || 0;
+  var cashUsage = opts.cashUsage || 0;
+  var threshold = Math.floor(totalSalary * 0.25);
+  var totalUsage = cardUsage + cashUsage;
+
+  // 공제 한도
+  var limit;
+  if (totalSalary > 120000000) limit = 2000000;
+  else if (totalSalary > 70000000) limit = 2500000;
+  else limit = 3000000;
+  // 추가 한도: 전통시장/대중교통 등 (여기서는 기본 한도만 사용)
+
+  // 1. 현재 상태 분석
+  var currentExcess = Math.max(0, totalUsage - threshold);
+  var currentDeduction = 0;
+  if (currentExcess > 0) {
+    if (cardUsage >= threshold) {
+      currentDeduction = Math.floor((cardUsage - threshold) * 0.15) + Math.floor(cashUsage * 0.3);
+    } else {
+      currentDeduction = Math.floor(currentExcess * 0.3);
+    }
+    currentDeduction = Math.min(limit, currentDeduction);
+  }
+
+  // 2. 최적 전략 계산
+  var remainingToThreshold = Math.max(0, threshold - totalUsage);
+  // 한도 도달까지 추가 공제 가능한 금액 = 공제한도 / 최고효율(30%) ... 단, 실제 추가 납입 필요금액은 더 큼
+  // 현재 deductions이 이미 한도에 도달했는지 확인
+  var isLimitReached = currentDeduction >= limit;
+
+  // 최적: threshold 도달 후 초과분은 체크카드/현금에 몰빵 (30%)
+  var deductionGap = limit - currentDeduction;
+  var additionalCashNeeded = 0;
+  var additionalCardNeeded = 0;
+  var remainingLimitSpace = 0;
+
+  if (!isLimitReached && totalUsage >= threshold) {
+    // threshold 넘었는데 한도 안 찼으면: 추가 체크카드 사용 추천
+    additionalCashNeeded = Math.ceil(deductionGap / 0.3);
+    remainingLimitSpace = additionalCashNeeded;
+  } else if (!isLimitReached && totalUsage < threshold) {
+    // threshold 미달: 신용카드로 threshold까지 채우고, 그 후 체크카드
+    additionalCardNeeded = remainingToThreshold;
+    var afterThresholdExcess = Math.ceil(deductionGap / 0.3);
+    additionalCashNeeded = afterThresholdExcess;
+  }
+
+  // 현재까지 사용 중 최적 공제율 (effective rate on excess)
+  var effectiveRate = currentExcess > 0 && currentDeduction > 0
+    ? Math.floor(currentDeduction / currentExcess * 1000) / 10
+    : 0;
+
+  return {
+    totalSalary: totalSalary,
+    threshold: threshold,
+    totalUsage: totalUsage,
+    cardUsage: cardUsage,
+    cashUsage: cashUsage,
+    currentExcess: currentExcess,
+    currentDeduction: currentDeduction,
+    limit: limit,
+    isLimitReached: isLimitReached,
+    remainingToThreshold: remainingToThreshold,
+    additionalCardNeeded: additionalCardNeeded,
+    additionalCashNeeded: additionalCashNeeded,
+    effectiveRate: effectiveRate,
+    // 추천 문장용
+    overThreshold: totalUsage >= threshold,
+    optimalCardToUse: totalUsage < threshold
+      ? remainingToThreshold  // threshold 달성까지 필요한 카드액
+      : 0,
+    optimalCashToUse: (isLimitReached || totalUsage < threshold)
+      ? additionalCashNeeded  // or 0 if limit already reached
+      : additionalCashNeeded
+  };
+};

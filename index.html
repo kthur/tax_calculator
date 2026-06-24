@@ -430,6 +430,39 @@
           </div>
         </div>
       </div>
+
+      <!-- 💳 신용카드 vs 체크카드 황금비율 계산기 -->
+      <div class="input-card" style="grid-column: 1 / -1; margin-top: 1.5rem;">
+        <h2 class="card-title">💳 신용카드 vs 체크카드 황금비율 계산기</h2>
+        <div class="grid-2col" style="display:grid; gap:1.5rem;">
+          <div>
+            <div class="form-group">
+              <label>대상 선택</label>
+              <select id="card-target" class="form-input">
+                <option value="husband">남편</option>
+                <option value="wife">아내</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>연간 총급여</label>
+              <input type="text" inputmode="numeric" id="card-salary" class="form-input money-input" value="70,000,000">
+            </div>
+            <div class="form-group">
+              <label>현재까지 신용카드 사용액</label>
+              <input type="text" inputmode="numeric" id="card-usage-amount" class="form-input money-input" value="12,000,000">
+            </div>
+            <div class="form-group">
+              <label>현재까지 체크카드/현금 사용액</label>
+              <input type="text" inputmode="numeric" id="card-cash-amount" class="form-input money-input" value="0">
+            </div>
+            <button class="btn-primary" id="btn-calc-card-ratio" style="margin-top:0.5rem;">🎯 황금비율 분석</button>
+          </div>
+          <div style="background:rgba(56,189,248,0.05); padding:1.5rem; border-radius:12px; display:none;" id="card-ratio-result">
+            <h4 style="font-weight:700; margin-bottom:8px; font-size:0.85rem;">📊 맞춤형 카드 사용 전략</h4>
+            <div id="card-ratio-content" style="font-size:0.82rem; line-height:1.6;"></div>
+          </div>
+        </div>
+      </div>
       
       <!-- 부가가치세 계산기 -->
       <div class="input-card" style="grid-column: 1 / -1; margin-top: 1.5rem;">

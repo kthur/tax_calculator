@@ -262,7 +262,8 @@ document.addEventListener('DOMContentLoaded', () => {
       'expense-revenue', 'hi-earned-income', 'hi-other-income',
       'prop-public-price', 'prop-market-price', 'gift-amount', 'gift-past',
       'stock-exchange-rate', 'inc-h-irp', 'inc-w-irp',
-      'pension-salary', 'pension-amount', 'pension-irp-amount'
+      'pension-salary', 'pension-amount', 'pension-irp-amount',
+      'card-salary', 'card-usage-amount', 'card-cash-amount'
     ];
     
     targetIds.forEach(id => {
@@ -964,6 +965,51 @@ document.addEventListener('DOMContentLoaded', () => {
       recommendationHtml;
   });
 
+  // 💳 신용카드 vs 체크카드 황금비율 계산기
+  document.getElementById('btn-calc-card-ratio').addEventListener('click', function () {
+    var salary = parseVal('card-salary');
+    var card = parseVal('card-usage-amount');
+    var cash = parseVal('card-cash-amount');
+    var target = document.getElementById('card-target').value;
+    var result = TaxCalculator.calculateCardOptimalMix({
+      totalSalary: salary,
+      cardUsage: card,
+      cashUsage: cash
+    });
+    document.getElementById('card-ratio-result').style.display = 'block';
+    var thresholdPct = Math.round(result.threshold / salary * 100);
+    var progressToThreshold = Math.min(100, Math.round(result.totalUsage / result.threshold * 100));
+    var progressBar = '<div style="background:rgba(255,255,255,0.06);height:8px;border-radius:4px;overflow:hidden;margin:6px 0;">' +
+      '<div style="background:var(--accent-info);width:' + progressToThreshold + '%;height:100%;transition:width 0.3s;"></div></div>';
+    var html = '<div>📊 총급여: <strong>' + salary.toLocaleString() + '원</strong></div>' +
+      '<div>공제 문턱(' + thresholdPct + '%): <strong>' + result.threshold.toLocaleString() + '원</strong>' +
+      (result.remainingToThreshold > 0 ? ' (🚩 <strong>' + result.remainingToThreshold.toLocaleString() + '원</strong> 부족)' : '') + '</div>' +
+      progressBar +
+      '<div>신용카드: ' + card.toLocaleString() + '원 | 체크/현금: ' + cash.toLocaleString() + '원</div>' +
+      '<div>합계 사용액: <strong>' + result.totalUsage.toLocaleString() + '원</strong></div>';
+    if (result.overThreshold) {
+      html += '<div>공제 대상 초과분: <strong>' + result.currentExcess.toLocaleString() + '원</strong></div>';
+      html += '<div>현재 예상 공제액: <strong>' + result.currentDeduction.toLocaleString() + '원</strong> / 한도 ' + result.limit.toLocaleString() + '원</div>';
+    }
+    html += '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:8px 0;">';
+    // 추천 메시지
+    if (result.remainingToThreshold > 0) {
+      html += '<div style="padding:8px;background:rgba(56,189,248,0.12);border-radius:6px;">' +
+        '📌 문턱까지 <strong>' + result.remainingToThreshold.toLocaleString() + '원</strong> 부족!<br>' +
+        '당분간 <strong>체크카드</strong>를 사용해 문턱을 넘은 뒤, 초과분은 <strong>체크카드(30%)</strong>에 집중하세요.<br>' +
+        '<span style="font-size:0.75rem;opacity:0.7;">신용카드는 문턱(25%)에 도달하는 용도로만 사용하고, 이후 체크카드로 30% 공제율을 받는 것이 최적입니다.</span></div>';
+    } else if (!result.isLimitReached) {
+      html += '<div style="padding:8px;background:rgba(0,212,170,0.12);border-radius:6px;border-left:3px solid var(--accent-secondary);">' +
+        '✅ 문턱 도달! 앞으로 <strong>체크카드/현금</strong>으로 <strong>' + result.additionalCashNeeded.toLocaleString() + '원</strong>을 더 사용하면<br>' +
+        '최대 한도 ' + result.limit.toLocaleString() + '원까지 공제 가능합니다.<br>' +
+        '<span style="font-size:0.75rem;opacity:0.7;">초과분은 체크카드(30% 공제)가 유리합니다.</span></div>';
+    } else {
+      html += '<div style="padding:8px;background:rgba(255,217,61,0.1);border-radius:6px;">' +
+        '✅ 공제 한도(<strong>' + result.limit.toLocaleString() + '원</strong>)에 도달했습니다. 더 이상 추가 공제는 없습니다.</div>';
+    }
+    document.getElementById('card-ratio-content').innerHTML = html;
+  });
+
   // 🧮 N잡러 경비율 비교
   document.getElementById('btn-calc-expense-ratio').addEventListener('click', () => {
     const bizCode = document.getElementById('expense-biz-code').value;
@@ -1205,7 +1251,8 @@ document.addEventListener('DOMContentLoaded', () => {
   var newMoneyFields = [
       'expense-revenue','hi-earned-income','hi-other-income','hi-regional-income','hi-regional-property',
       'prop-public-price','prop-market-price','gift-amount','gift-past','stock-exchange-rate',
-      'inc-h-irp','inc-w-irp','pension-salary','pension-amount','pension-irp-amount'
+      'inc-h-irp','inc-w-irp','pension-salary','pension-amount','pension-irp-amount',
+      'card-salary','card-usage-amount','card-cash-amount'
     ];
   newMoneyFields.forEach(function (id) {
     var el = document.getElementById(id);
