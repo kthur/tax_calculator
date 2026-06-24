@@ -595,6 +595,12 @@ table {
   margin-bottom: 1rem;
 }
 
+/* Responsive 2-column grid (collapses to 1-col on mobile) */
+.grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
 .gift-sell-grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -604,5 +610,161 @@ table {
 @media (max-width: 768px) {
   .gift-sell-grid {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================
+   📱 Mobile Responsive Design
+   ========================================== */
+
+/* --- 768px: Tablet & Mobile --- */
+@media (max-width: 768px) {
+
+  /* App container padding */
+  .app-container {
+    padding: 1rem 0.75rem;
+  }
+
+  /* Header: stack vertically */
+  header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .theme-switch-btn {
+    align-self: flex-end;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+  }
+
+  .logo-text h1 {
+    font-size: 1.25rem;
+  }
+
+  .logo-text p {
+    font-size: 0.72rem;
+  }
+
+  /* Nav tabs */
+  .tab-navigation {
+    margin-bottom: 1.25rem;
+  }
+  .tab-btn {
+    font-size: 0.85rem;
+    padding: 10px 10px;
+  }
+
+  /* Cards padding */
+  .input-card, .result-card {
+    padding: 1.25rem 1rem;
+    border-radius: 14px;
+  }
+
+  .card-title {
+    font-size: 1.05rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Collapse all 2-col inline grids to 1-col */
+  .grid-2col {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Advice cards: single column on mobile */
+  .advice-card-list {
+    grid-template-columns: 1fr;
+  }
+
+  /* Result items: allow wrap on small screens */
+  .result-item {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .result-item > span:last-child {
+    font-size: 0.95rem;
+  }
+
+  /* Person card inputs on mobile */
+  .person-card {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+  }
+
+  /* Primary button */
+  .btn-primary {
+    font-size: 0.95rem;
+    padding: 13px;
+  }
+
+  /* Tooltip: prevent overflow on mobile */
+  .tooltip-icon::before {
+    left: auto;
+    right: 0;
+    transform: none;
+    width: 200px;
+    font-size: 10px;
+  }
+
+  /* Form inputs touch-friendly */
+  .form-input {
+    font-size: 0.95rem;
+    padding: 11px 13px;
+  }
+}
+
+/* --- 480px: Small phones --- */
+@media (max-width: 480px) {
+  .app-container {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .input-card, .result-card {
+    padding: 1rem 0.75rem;
+    border-radius: 12px;
+  }
+
+  .card-title {
+    font-size: 0.95rem;
+  }
+
+  .tab-btn {
+    font-size: 0.78rem;
+    padding: 9px 6px;
+    min-width: 80px;
+  }
+
+  .advice-card {
+    padding: 1rem;
+  }
+
+  .advice-title {
+    font-size: 0.85rem;
+  }
+
+  .advice-desc {
+    font-size: 0.78rem;
+  }
+
+  .form-group label {
+    font-size: 0.78rem;
+  }
+
+  .form-input {
+    font-size: 0.9rem;
+    padding: 10px 11px;
+  }
+
+  /* Tooltip: show above, aligned right */
+  .tooltip-icon::before {
+    width: 170px;
+    font-size: 9px;
+    padding: 5px 8px;
+  }
+
+  /* Won helper label */
+  .won-helper {
+    font-size: 0.72rem !important;
   }
 }

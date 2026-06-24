@@ -46,7 +46,7 @@
         <h2 class="card-title">💵 종합소득세 &amp; 연말정산 통합 입력</h2>
         
         <!-- 부부 소득 및 개별 금융소득 입력 영역 -->
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:1.5rem;">
+        <div class="grid-2col" style="display:grid; gap:15px; margin-bottom:1.5rem;">
           
           <!-- 배우자 1 (남편) 입력 영역 -->
           <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);">
@@ -169,7 +169,7 @@
         <!-- 기타공제 및 벤처투자/주택자금 통합 상세 설정 (부부 공유 공제성 자금) -->
         <div style="background: rgba(255,255,255,0.01); padding: 1rem; border-radius: 10px; margin-bottom: 1.5rem; border: 1px solid rgba(255,255,255,0.05);">
           <h4 style="font-size: 0.9rem; margin-bottom: 10px; color: var(--accent-info)">🚀 공제성 투자 &amp; 주택자금 설정</h4>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+          <div class="grid-2col" style="display:grid; gap:10px;">
             <div class="form-group" style="margin-bottom:0;">
               <label>벤처기업 투자금액</label>
               <input type="text" inputmode="numeric" id="inc-venture" class="form-input money-input" value="0">
@@ -179,7 +179,7 @@
               <input type="text" inputmode="numeric" id="inc-housing-sub" class="form-input money-input" value="0">
             </div>
           </div>
-          <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+          <div class="grid-2col" style="display:grid; gap:10px; margin-top:10px;">
             <div class="form-group" style="margin-bottom:0;">
               <label>전세대출 원리금상환액</label>
               <input type="text" inputmode="numeric" id="inc-housing-loan" class="form-input money-input" value="0">
@@ -252,7 +252,7 @@
         <h2 class="card-title">🏆 종합 절세 통합 리포트</h2>
         
         <!-- 개별 결정세액 리포트 -->
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:1.5rem;">
+        <div class="grid-2col" style="display:grid; gap:15px; margin-bottom:1.5rem;">
           <div style="background:rgba(108,99,255,0.05); padding:12px; border-radius:8px;">
             <h4 style="font-size:0.9rem; color:var(--accent-primary); margin-bottom:5px; font-weight:700;">남편 세금 리포트</h4>
             <div style="font-size:0.85rem; display:flex; flex-direction:column; gap:4px;">
@@ -276,7 +276,7 @@
         </div>
 
         <!-- 부부 각각의 금융소득 정밀 산출 내역 분리 표시 -->
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:1.5rem;">
+        <div class="grid-2col" style="display:grid; gap:15px; margin-bottom:1.5rem;">
           <div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; font-size:0.85rem;">
             <h4 style="font-weight:700; color:var(--accent-primary); margin-bottom:6px;">배우자 1 금융소득 결과</h4>
             <div>ISA 비과세액: <span id="res-h-isa-free">0 원</span></div>
@@ -333,7 +333,7 @@
       <!-- 부가가치세 계산기 -->
       <div class="input-card" style="grid-column: 1 / -1; margin-top: 1.5rem;">
         <h2 class="card-title">🧾 개인사업자 부가가치세 계산</h2>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+        <div class="grid-2col" style="display:grid; gap:1.5rem;">
           <div>
             <div class="form-group">
               <label for="vat-type">과세 사업자 유형</label>
