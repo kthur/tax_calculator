@@ -641,3 +641,42 @@ TaxCalculator.checkDependentStatus = function(opts) {
   if (opts.isPropertyOwner) { return { isEligible: false, reason: "재산보유: 재산세 과세대상 재산 보유로 피부양자 자격 상실 가능" }; }
   return { isEligible: true, reason: "✅ 피부양자 자격 유지" };
 };
+
+// ──────────────────────────────────────────────
+// 연금저축/IRP 세액공제 최적화
+// ──────────────────────────────────────────────
+/**
+ * @param {Object} opts
+ * @param {number} opts.totalSalary     — 총급여 (연말정산 기준 grossIncome)
+ * @param {number} opts.currentPension  — 현재까지 납입한 연금저축 금액
+ * @param {number} opts.currentIrp      — 현재까지 납입한 IRP 금액
+ * @param {number} opts.isHusband       — true이면 남편용 필드 ID 생성
+ * @returns {Object}
+ */
+TaxCalculator.calculatePensionOptimization = function(opts) {
+  var totalSalary = opts.totalSalary || 0;
+  var currentPension = opts.currentPension || 0;
+  var currentIrp = opts.currentIrp || 0;
+  var MAX_LIMIT = 9000000;
+  var currentTotal = Math.min(MAX_LIMIT, currentPension + currentIrp);
+  var remaining = Math.max(0, MAX_LIMIT - currentTotal);
+  var rate = totalSalary <= 55000000 ? 0.165 : 0.132;
+  var currentCredit = Math.floor(currentTotal * rate);
+  var potentialCredit = Math.floor(MAX_LIMIT * rate);
+  var additionalCredit = potentialCredit - currentCredit;
+  // 최적 추천: 연금저축 유지, 나머지를 IRP로 채움
+  var recommendedIrp = Math.max(0, currentIrp + remaining);
+  return {
+    currentPension: currentPension,
+    currentIrp: currentIrp,
+    currentTotal: currentTotal,
+    remaining: remaining,
+    rate: rate * 100,
+    maxLimit: MAX_LIMIT,
+    currentCredit: currentCredit,
+    potentialCredit: potentialCredit,
+    additionalCredit: additionalCredit,
+    recommendedIrp: recommendedIrp,
+    reachedLimit: currentTotal >= MAX_LIMIT
+  };
+};

@@ -94,8 +94,12 @@
               <input type="text" inputmode="numeric" id="inc-h-yellow" class="form-input money-input" value="0">
             </div>
             <div class="form-group">
-              <label>연금저축/IRP 납입</label>
+              <label>연금저축 납입</label>
               <input type="text" inputmode="numeric" id="inc-h-pension" class="form-input money-input" value="0">
+            </div>
+            <div class="form-group">
+              <label>IRP 추가 납입</label>
+              <input type="text" inputmode="numeric" id="inc-h-irp" class="form-input money-input" value="0">
             </div>
 
             <!-- 배우자 1 금융소득 상세 설정 분리 -->
@@ -152,8 +156,12 @@
               <input type="text" inputmode="numeric" id="inc-w-yellow" class="form-input money-input" value="0">
             </div>
             <div class="form-group">
-              <label>연금저축/IRP 납입</label>
+              <label>연금저축 납입</label>
               <input type="text" inputmode="numeric" id="inc-w-pension" class="form-input money-input" value="0">
+            </div>
+            <div class="form-group">
+              <label>IRP 추가 납입</label>
+              <input type="text" inputmode="numeric" id="inc-w-irp" class="form-input money-input" value="0">
             </div>
 
             <!-- 배우자 2 금융소득 상세 설정 분리 -->
@@ -387,6 +395,39 @@
         <h3 class="card-title" style="font-size:1.1rem; margin-bottom:10px;">💡 맞춤형 절세 추가 가이드</h3>
         <div class="advice-card-list-wrap">
           <div class="advice-card-list" id="income-advice-list" style="display:grid; gap:10px;"></div>
+        </div>
+      </div>
+
+      <!-- 💰 연금저축/IRP 세액공제 최적화 -->
+      <div class="input-card" style="grid-column: 1 / -1; margin-top: 1.5rem;">
+        <h2 class="card-title">💰 연금저축/IRP 세액공제 최적화</h2>
+        <div class="grid-2col" style="display:grid; gap:1.5rem;">
+          <div>
+            <div class="form-group">
+              <label>대상 선택</label>
+              <select id="pension-target" class="form-input">
+                <option value="husband">남편</option>
+                <option value="wife">아내</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>연간 총급여 (연말정산 기준)</label>
+              <input type="text" inputmode="numeric" id="pension-salary" class="form-input money-input" value="70,000,000">
+            </div>
+            <div class="form-group">
+              <label>현재까지 납입한 연금저축</label>
+              <input type="text" inputmode="numeric" id="pension-amount" class="form-input money-input" value="4,000,000">
+            </div>
+            <div class="form-group">
+              <label>현재까지 납입한 IRP</label>
+              <input type="text" inputmode="numeric" id="pension-irp-amount" class="form-input money-input" value="0">
+            </div>
+            <button class="btn-primary" id="btn-calc-pension-opt" style="margin-top:0.5rem;">🎯 최적화 분석</button>
+          </div>
+          <div style="background:rgba(0,212,170,0.05); padding:1.5rem; border-radius:12px; display:none;" id="pension-opt-result">
+            <h4 style="font-weight:700; margin-bottom:8px; font-size:0.85rem;">📊 연금 세액공제 최적화</h4>
+            <div id="pension-opt-content" style="font-size:0.82rem; line-height:1.6;"></div>
+          </div>
         </div>
       </div>
       

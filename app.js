@@ -261,7 +261,8 @@ document.addEventListener('DOMContentLoaded', () => {
       'stock-gain', 'opt-gs-purchase', 'opt-gs-current',
       'expense-revenue', 'hi-earned-income', 'hi-other-income',
       'prop-public-price', 'prop-market-price', 'gift-amount', 'gift-past',
-      'stock-exchange-rate'
+      'stock-exchange-rate', 'inc-h-irp', 'inc-w-irp',
+      'pension-salary', 'pension-amount', 'pension-irp-amount'
     ];
     
     targetIds.forEach(id => {
@@ -528,6 +529,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hCard = parseVal('inc-h-card');
     const hYellow = parseVal('inc-h-yellow');
     const hPension = parseVal('inc-h-pension');
+    const hIrp = parseVal('inc-h-irp');
 
     // 🆕 배우자 1 금융소득 상세 설정 분리 반영
     const hFinancialGen = parseVal('inc-h-financial-gen');
@@ -542,6 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const wCard = parseVal('inc-w-card');
     const wYellow = parseVal('inc-w-yellow');
     const wPension = parseVal('inc-w-pension');
+    const wIrp = parseVal('inc-w-irp');
 
     // 🆕 배우자 2 금융소득 상세 설정 분리 반영
     const wFinancialGen = parseVal('inc-w-financial-gen');
@@ -625,6 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
       expense: hType === 'business' ? Math.floor(hSalary * 0.3) : 0,
       yellowUmbrella: hYellow,
       pensionSavings: hPension,
+      irpSavings: hIrp,
       financialGeneral: hFinancialGen,
       financialOverseas: hFinancialOverseas,
       isaIncome: hIsaIncome,
@@ -640,6 +644,7 @@ document.addEventListener('DOMContentLoaded', () => {
       expense: wType === 'business' ? Math.floor(wSalary * 0.3) : 0,
       yellowUmbrella: wYellow,
       pensionSavings: wPension,
+      irpSavings: wIrp,
       financialGeneral: wFinancialGen,
       financialOverseas: wFinancialOverseas,
       isaIncome: wIsaIncome,
@@ -673,11 +678,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ③ 맞벌이 부양가족 최적 배정 연동
     const husbandOptData = {
-      salary: hSalary, card: hCard, cash: 0, pension: hPension, SME: false,
+      salary: hSalary, card: hCard, cash: 0, pension: hPension, irp: hIrp, SME: false,
       housingSubscription, housingLoanRepay, ventureInvestment
     };
     const wifeOptData = {
-      salary: wSalary, card: wCard, cash: 0, pension: wPension, SME: false
+      salary: wSalary, card: wCard, cash: 0, pension: wPension, irp: wIrp, SME: false
     };
 
     const optResult = TaxOptimizer.optimizeCoupleYearEnd({ husband: husbandOptData, wife: wifeOptData, dependents });
@@ -928,6 +933,37 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('gift-tax-content').innerHTML = html;
   });
 
+  // 💰 연금저축/IRP 세액공제 최적화
+  document.getElementById('btn-calc-pension-opt').addEventListener('click', function () {
+    var target = document.getElementById('pension-target').value;
+    var salary = parseVal('pension-salary');
+    var pension = parseVal('pension-amount');
+    var irp = parseVal('pension-irp-amount');
+    var result = TaxCalculator.calculatePensionOptimization({
+      totalSalary: salary,
+      currentPension: pension,
+      currentIrp: irp
+    });
+    document.getElementById('pension-opt-result').style.display = 'block';
+    var statusIcon = result.reachedLimit ? '✅' : '📌';
+    var statusText = result.reachedLimit ? '연250만 한도 도달!' : '추가 납입 가능';
+    var recommendationHtml = '';
+    if (!result.reachedLimit) {
+      recommendationHtml = '<div style="margin-top:8px;padding:10px;background:rgba(0,212,170,0.12);border-radius:8px;border-left:3px solid var(--accent-secondary);">' +
+        '💡 <strong>IRP 계좌</strong>를 개설(또는 추가 납입)하여 <strong>' + result.remaining.toLocaleString() + '원</strong>을 더 채우면<br>' +
+        '연말정산 때 <strong style="color:var(--accent-secondary);font-size:1rem;">' + result.additionalCredit.toLocaleString() + '원</strong>을 추가 환급받습니다!' +
+        '</div>';
+    }
+    document.getElementById('pension-opt-content').innerHTML =
+      '<div>' + statusIcon + ' 현재 합계: <strong>' + result.currentTotal.toLocaleString() + '원</strong> / ' + result.maxLimit.toLocaleString() + '원 (' + statusText + ')</div>' +
+      '<div>연금저축: ' + result.currentPension.toLocaleString() + '원 | IRP: ' + result.currentIrp.toLocaleString() + '원</div>' +
+      '<div>세액공제율: <strong>' + result.rate.toFixed(1) + '%</strong> (총급여 ' + salary.toLocaleString() + '원 기준)</div>' +
+      '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">' +
+      '<div>현재 세액공제액: ' + result.currentCredit.toLocaleString() + '원</div>' +
+      '<div style="font-weight:bold;color:var(--accent-secondary);font-size:0.95rem;">최대 세액공제액: ' + result.potentialCredit.toLocaleString() + '원</div>' +
+      recommendationHtml;
+  });
+
   // 🧮 N잡러 경비율 비교
   document.getElementById('btn-calc-expense-ratio').addEventListener('click', () => {
     const bizCode = document.getElementById('expense-biz-code').value;
@@ -1167,9 +1203,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 새 섹션 input 초기화 (money-input 포맷 적용)
   var newMoneyFields = [
-    'expense-revenue','hi-earned-income','hi-other-income','hi-regional-income','hi-regional-property',
-    'prop-public-price','prop-market-price','gift-amount','gift-past','stock-exchange-rate'
-  ];
+      'expense-revenue','hi-earned-income','hi-other-income','hi-regional-income','hi-regional-property',
+      'prop-public-price','prop-market-price','gift-amount','gift-past','stock-exchange-rate',
+      'inc-h-irp','inc-w-irp','pension-salary','pension-amount','pension-irp-amount'
+    ];
   newMoneyFields.forEach(function (id) {
     var el = document.getElementById(id);
     if (el) {
@@ -1188,9 +1225,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 종합소득세 실시간
   [
-    'inc-h-salary','inc-h-type','inc-h-card','inc-h-yellow','inc-h-pension',
+    'inc-h-salary','inc-h-type','inc-h-card','inc-h-yellow','inc-h-pension','inc-h-irp',
     'inc-h-financial-gen','inc-h-financial-overseas','inc-h-isa','inc-h-isa-type','inc-h-bond',
-    'inc-w-salary','inc-w-type','inc-w-card','inc-w-yellow','inc-w-pension',
+    'inc-w-salary','inc-w-type','inc-w-card','inc-w-yellow','inc-w-pension','inc-w-irp',
     'inc-w-financial-gen','inc-w-financial-overseas','inc-w-isa','inc-w-isa-type','inc-w-bond',
     'inc-venture','inc-housing-sub','inc-housing-loan'
   ].forEach(id => {
