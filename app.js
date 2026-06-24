@@ -263,7 +263,13 @@ document.addEventListener('DOMContentLoaded', () => {
       'prop-public-price', 'prop-market-price', 'gift-amount', 'gift-past',
       'stock-exchange-rate', 'inc-h-irp', 'inc-w-irp',
       'pension-salary', 'pension-amount', 'pension-irp-amount',
-      'card-salary', 'card-usage-amount', 'card-cash-amount'
+      'card-salary', 'card-usage-amount', 'card-cash-amount', 'card-traditional', 'card-transit', 'card-book',
+      'inherit-total-asset', 'inherit-spouse-share', 'inherit-coresident-value', 'inherit-financial', 'inherit-gift-past',
+      'mg-amount', 'mg-past',
+      'sports-salary', 'sports-fee',
+      'hometown-amount',
+      'isa-annual', 'isa-salary', 'isa-pension-transfer',
+      'deemed-deposit', 'deemed-small'
     ];
     
     targetIds.forEach(id => {
@@ -508,6 +514,218 @@ document.addEventListener('DOMContentLoaded', () => {
 
   checkUseCardSales.addEventListener('change', () => {
     groupCardSalesAmt.style.display = checkUseCardSales.checked ? 'block' : 'none';
+  });
+
+  // 🏛️ 상속세 계산
+  document.getElementById('btn-calc-inheritance').addEventListener('click', () => {
+    const totalAsset = parseVal('inherit-total-asset');
+    const childCount = parseInt(document.getElementById('inherit-child-count').value) || 0;
+    const hasLivingSpouse = document.getElementById('inherit-has-spouse').checked;
+    const spouseShare = parseVal('inherit-spouse-share');
+    const isCoResidentHouse = document.getElementById('inherit-coresident').checked;
+    const coResidentHouseValue = parseVal('inherit-coresident-value');
+    const financialAssetValue = parseVal('inherit-financial');
+    const giftPast10Years = parseVal('inherit-gift-past');
+
+    const result = TaxCalculator.calculateInheritanceTax({
+      totalAsset, childCount, hasLivingSpouse, spouseShare,
+      isCoResidentHouse, coResidentHouseValue, financialAssetValue, giftPast10Years
+    });
+
+    document.getElementById('inherit-result').style.display = 'block';
+    const isTaxFree = result.isTaxFree;
+    document.getElementById('inherit-result-content').innerHTML = `
+      <div>상속세 과세가액: <strong>${result.grossEstate.toLocaleString()} 원</strong></div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+      <div style="color:var(--accent-info);">📋 공제 내역</div>
+      <div>· 인적공제(기초${result.basicDeduction.toLocaleString()} + 자녀${result.childDeduction.toLocaleString()}): <strong>${result.personDeduction.toLocaleString()} 원</strong></div>
+      <div>· 배우자 상속공제: <strong>${result.spouseDeduction.toLocaleString()} 원</strong> ${result.spouseDeduction >= 500000000 ? '(법정지분 한도)' : '(최소공제)'}</div>
+      ${result.coResidentDeduction > 0 ? `<div>· 동거주택 상속공제: <strong>${result.coResidentDeduction.toLocaleString()} 원</strong></div>` : ''}
+      ${result.financialDeduction > 0 ? `<div>· 금융재산 상속공제: <strong>${result.financialDeduction.toLocaleString()} 원</strong></div>` : ''}
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+      <div>공제 합계: <strong>${result.totalDeductions.toLocaleString()} 원</strong></div>
+      <div>과세표준: <strong>${result.taxableEstate.toLocaleString()} 원</strong></div>
+      <div>세율: ${result.rate}%</div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+      ${isTaxFree
+        ? '<div style="font-weight:bold;color:var(--accent-secondary);font-size:1rem;">✅ 상속세 비과세! (면세한도 ' + result.exemptionLimit.toLocaleString() + '원)</div>'
+        : `<div style="font-size:0.9rem;font-weight:bold;color:var(--accent-primary);">상속세: ${result.tax.toLocaleString()} 원</div>
+           <div style="font-size:0.9rem;font-weight:bold;color:var(--accent-warning);">지방세: ${result.localTax.toLocaleString()} 원</div>
+           <div style="font-size:1rem;font-weight:bold;color:var(--accent-secondary);">💵 총 납부세액: ${result.totalTax.toLocaleString()} 원</div>`
+      }
+      <div style="margin-top:8px;padding:8px;background:rgba(0,212,170,0.08);border-radius:6px;font-size:0.75rem;line-height:1.3;">
+        📌 개정 반영: 자녀공제 1인당 5억 원(10배↑) · 최고세율 40%(50% 구간 삭제) · 동거주택 최대 6억 · 금융재산 20%
+      </div>
+    `;
+  });
+
+  // 동거주택 체크박스 토글
+  document.getElementById('inherit-coresident').addEventListener('change', function() {
+    document.getElementById('inherit-coresident-group').style.display = this.checked ? 'block' : 'none';
+  });
+
+  // 💍 혼인·출산 증여재산공제
+  document.getElementById('btn-calc-marriage-gift').addEventListener('click', () => {
+    const giftAmount = parseVal('mg-amount');
+    const reason = document.getElementById('mg-reason').value;
+    const past10YrsGift = parseVal('mg-past');
+    const result = TaxCalculator.calculateMarriageBirthGiftTax({ giftAmount, reason, past10YrsGift });
+
+    document.getElementById('mg-result').style.display = 'block';
+    document.getElementById('mg-result-content').innerHTML = `
+      <div>증여 금액: <strong>${giftAmount.toLocaleString()} 원</strong></div>
+      <div>최근 10년 누계: ${result.cumulative.toLocaleString()} 원</div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+      <div style="color:var(--accent-secondary);">✅ 기본공제: ${result.basicExemption.toLocaleString()} 원</div>
+      <div style="color:var(--accent-gold);">🎉 혼인·출산 특별공제: <strong>${result.specialExemption.toLocaleString()} 원</strong></div>
+      <div>총 공제 한도: <strong>${result.totalExemption.toLocaleString()} 원</strong></div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+      ${result.isTaxFree
+        ? '<div style="font-weight:bold;color:var(--accent-secondary);font-size:1.05rem;">✅ 증여세 전액 면제!</div>'
+        : `<div>과세표준: ${result.taxableGift.toLocaleString()} 원</div>
+           <div>세율: ${result.rate}%</div>
+           <div style="font-weight:bold;color:var(--accent-primary);">증여세: ${result.tax.toLocaleString()} 원</div>
+           <div style="font-weight:bold;color:var(--accent-warning);">지방세: ${result.localTax.toLocaleString()} 원</div>
+           <div style="font-weight:bold;color:var(--accent-secondary);font-size:1rem;">💵 총 세액: ${result.totalTax.toLocaleString()} 원</div>`
+      }
+      <div style="margin-top:8px;padding:8px;background:rgba(0,212,170,0.06);border-radius:6px;font-size:0.75rem;">
+        💡 양가(친정+시댁) 각각 1.5억 원씩 총 3억 원까지 증여세 없이 이전 가능합니다.
+      </div>
+    `;
+  });
+
+  // 🏟️ 체육시설 이용료 소득공제
+  document.getElementById('btn-calc-sports').addEventListener('click', () => {
+    const totalSalary = parseVal('sports-salary');
+    const facilityFee = parseVal('sports-fee');
+    const hasPT = document.getElementById('sports-has-pt').checked;
+    const result = TaxCalculator.calculateSportsDeduction({ totalSalary, facilityFee, hasPT });
+
+    document.getElementById('sports-result').style.display = 'block';
+    if (!result.isEligible) {
+      document.getElementById('sports-result-content').innerHTML = `
+        <div style="color:var(--accent-warning);font-weight:bold;">❌ ${result.reason}</div>
+      `;
+      return;
+    }
+    document.getElementById('sports-result-content').innerHTML = `
+      <div>총급여: ${result.totalSalary.toLocaleString()} 원</div>
+      <div>시설 이용료: ${result.facilityFee.toLocaleString()} 원</div>
+      ${result.hasPT ? `<div>PT 포함 → 50%만 인정: <strong>${result.eligibleAmount.toLocaleString()} 원</strong></div>` : ''}
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+      <div>공제 대상 금액: ${result.eligibleAmount.toLocaleString()} 원 (한도 ${result.deductionLimit.toLocaleString()}원)</div>
+      <div style="font-weight:bold;color:var(--accent-secondary);font-size:1rem;">
+        💰 소득공제액 (30%): <strong>${result.deduction.toLocaleString()} 원</strong>
+      </div>
+      <div style="margin-top:8px;font-size:0.75rem;opacity:0.7;">※ 1:1 PT, 기구 필라테스 등 고가 맞춤형 강습비는 공제 제외</div>
+    `;
+  });
+
+  // 🎁 고향사랑기부제 최적화
+  document.getElementById('btn-calc-hometown').addEventListener('click', () => {
+    const donationAmount = parseVal('hometown-amount');
+    const isDisasterArea = document.getElementById('hometown-disaster').checked;
+    const result = TaxCalculator.calculateHometownDonation({ donationAmount, isDisasterArea });
+
+    document.getElementById('hometown-result').style.display = 'block';
+    document.getElementById('hometown-result-content').innerHTML = `
+      <div>기부 금액: <strong>${result.donationAmount.toLocaleString()} 원</strong></div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+      <div>· 10만 원까지 100%: <strong>${result.creditFirst100k.toLocaleString()} 원</strong></div>
+      ${result.donationAmount > 100000 ? `<div>· 10~20만 원 44%: <strong>${result.creditSecondBracket.toLocaleString()} 원</strong></div>` : ''}
+      ${result.donationAmount > 200000 ? `<div>· 20만 초과 ${isDisasterArea ? '33%' : '16.5%'}: <strong>${(result.creditThirdBracket || 0).toLocaleString()} 원</strong></div>` : ''}
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+      <div>총 세액공제액: <strong>${result.totalCredit.toLocaleString()} 원</strong></div>
+      <div>답례품 가치(30%): <strong>${result.giftValue.toLocaleString()} 원</strong></div>
+      <div style="font-weight:bold;color:var(--accent-secondary);font-size:1rem;">
+        🎁 총 체감 혜택: <strong>${result.totalBenefit.toLocaleString()} 원</strong>
+        (실질 환원율 ${result.effectiveReturnRate}%)
+      </div>
+      <div style="margin-top:8px;padding:8px;background:rgba(0,212,170,0.1);border-radius:6px;font-size:0.8rem;">
+        💡 <strong>최적 전략:</strong> 20만 원 기부 시 14.4만 원 환급 + 6만 원 답례품 = <strong>20.4만 원 혜택</strong> (원금 상회!)<br>
+        <span style="font-size:0.7rem;">상/하반기 10만 원씩 분할 기부하여 시즌별 답례품 2회 수령 가능</span>
+      </div>
+    `;
+  });
+
+  // 💰 ISA 최적화
+  document.getElementById('isa-matured').addEventListener('change', function() {
+    document.getElementById('isa-pension-group').style.display = this.checked ? 'block' : 'none';
+  });
+  document.getElementById('btn-calc-isa-opt').addEventListener('click', () => {
+    const annualIncome = parseVal('isa-annual');
+    const isaType = document.getElementById('isa-type-select').value;
+    const totalIncome = parseVal('isa-salary');
+    const isFinancialCompTax = document.getElementById('isa-financial-comp-tax').checked;
+    const isMatured = document.getElementById('isa-matured').checked;
+    const pensionTransfer = parseVal('isa-pension-transfer');
+    const isDomesticType = isaType === 'domestic';
+
+    const result = TaxCalculator.calculateISAOptimization({
+      annualIncome, totalIncome, incomeType: 'wage',
+      isFinancialCompTax, currentIsaType: isaType === 'domestic' ? 'general' : isaType,
+      isaBalance: annualIncome, isMatured, pensionTransfer, isDomesticType
+    });
+
+    document.getElementById('isa-opt-result').style.display = 'block';
+    document.getElementById('isa-opt-content').innerHTML = `
+      <div>📌 ISA 유형: <strong>${result.isaType === 'sub' ? '서민형' : result.isaType === 'domestic' ? '국내투자형' : '일반형'}</strong></div>
+      <div>연 납입 한도: <strong>${result.annualLimit.toLocaleString()} 원</strong> (2026년 개편: 2배↑)</div>
+      <div>비과세 한도: <strong>${result.taxfreeLimit.toLocaleString()} 원</strong></div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+      ${result.isDomesticType
+        ? `<div style="color:var(--accent-info);">국내투자형 ISA → ${result.domesticSeparatedRate}% 분리과세 (종합과세 회피)</div>
+           <div style="font-weight:bold;color:var(--accent-secondary);">분리과세 세액: ${result.domesticTax.toLocaleString()} 원</div>`
+        : `<div>비과세 적용: <strong>${result.normalTaxfree.toLocaleString()} 원</strong></div>
+           <div>초과분 분리과세(9.9%): ${result.normalSeparatedTax.toLocaleString()} 원</div>`
+      }
+      ${result.pensionTransferCredit > 0
+        ? `<hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+           <div style="color:var(--accent-gold);">🔄 ISA→연금 전환 세액공제: <strong>${result.pensionTransferCredit.toLocaleString()} 원</strong></div>`
+        : ''}
+      <div style="margin-top:8px;padding:8px;background:rgba(56,189,248,0.08);border-radius:6px;font-size:0.75rem;">
+        ${result.summary}
+      </div>
+    `;
+  });
+
+  // 🏠 간주임대료 계산
+  document.getElementById('deemed-house-count').addEventListener('change', function() {
+    const show = this.value >= '2';
+    document.getElementById('deemed-highprice-group').style.display = show ? 'block' : 'none';
+  });
+  // 초기 상태 (2주택 기본)
+  document.getElementById('deemed-highprice-group').style.display = 'block';
+  document.getElementById('btn-calc-deemed-rent').addEventListener('click', () => {
+    const houseCount = parseInt(document.getElementById('deemed-house-count').value) || 0;
+    const jeonseDeposits = parseVal('deemed-deposit');
+    const hasHighPriceHouse = document.getElementById('deemed-highprice').value === 'yes';
+    const smallHouseExclusion = parseVal('deemed-small');
+
+    const result = TaxCalculator.calculateDeemedRent({ houseCount, jeonseDeposits, hasHighPriceHouse, smallHouseExclusion });
+
+    document.getElementById('deemed-result').style.display = 'block';
+    if (!result.isTaxable) {
+      document.getElementById('deemed-result-content').innerHTML = `
+        <div style="color:var(--accent-secondary);font-weight:bold;">✅ ${result.reason}</div>
+      `;
+      return;
+    }
+    document.getElementById('deemed-result-content').innerHTML = `
+      <div>보유 주택 수: <strong>${result.houseCount}주택</strong></div>
+      <div>전세보증금 합계: ${result.jeonseDeposits.toLocaleString()} 원</div>
+      ${result.warningMsg ? `<div style="color:var(--accent-warning);">⚠️ ${result.warningMsg}</div>` : ''}
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+      <div>공제 기준: ${result.deductionBase.toLocaleString()} 원</div>
+      <div>초과 보증금: ${result.excessDeposit.toLocaleString()} 원</div>
+      <div>간주임대료: <strong>${result.deemedRent.toLocaleString()} 원</strong></div>
+      <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+      <div style="color:var(--accent-warning);">예상 종합소득세: ${result.incomeTax.toLocaleString()} 원</div>
+      <div style="color:var(--accent-warning);">지방소득세: ${result.localTax.toLocaleString()} 원</div>
+      <div style="font-weight:bold;color:var(--accent-secondary);font-size:1rem;">
+        💵 연간 추가 세액: <strong>${result.totalTax.toLocaleString()} 원</strong>
+      </div>
+    `;
   });
 
   // 5. 부양가족 동적 추가/삭제
@@ -1034,11 +1252,17 @@ document.addEventListener('DOMContentLoaded', () => {
     var salary = parseVal('card-salary');
     var card = parseVal('card-usage-amount');
     var cash = parseVal('card-cash-amount');
+    var traditional = parseVal('card-traditional');
+    var transit = parseVal('card-transit');
+    var book = parseVal('card-book');
     var target = document.getElementById('card-target').value;
     var result = TaxCalculator.calculateCardOptimalMix({
       totalSalary: salary,
       cardUsage: card,
-      cashUsage: cash
+      cashUsage: cash,
+      traditionalMarket: traditional,
+      publicTransit: transit,
+      bookPerformance: book
     });
     document.getElementById('card-ratio-result').style.display = 'block';
     var thresholdPct = Math.round(result.threshold / salary * 100);
@@ -1052,9 +1276,20 @@ document.addEventListener('DOMContentLoaded', () => {
       '<div>신용카드: ' + card.toLocaleString() + '원 | 체크/현금: ' + cash.toLocaleString() + '원</div>' +
       '<div>합계 사용액: <strong>' + result.totalUsage.toLocaleString() + '원</strong></div>';
     if (result.overThreshold) {
-      html += '<div>공제 대상 초과분: <strong>' + result.currentExcess.toLocaleString() + '원</strong></div>';
-      html += '<div>현재 예상 공제액: <strong>' + result.currentDeduction.toLocaleString() + '원</strong> / 한도 ' + result.limit.toLocaleString() + '원</div>';
+      html += '<div>공제 대상 초과분: <strong>' + (result.totalUsage - result.threshold).toLocaleString() + '원</strong></div>';
+      html += '<div>기본 공제 예상액: <strong>' + result.baseDeduction.toLocaleString() + '원</strong> / 한도 ' + result.limit.toLocaleString() + '원</div>';
     }
+    // 추가 공제 내역
+    if (result.tradDeduction > 0 || result.transitDeduction > 0 || result.bookDeduction > 0) {
+      html += '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">';
+      html += '<div style="font-size:0.8rem;color:var(--accent-info);font-weight:bold;">➕ 추가 공제 내역 (별도 한도)</div>';
+      if (result.tradDeduction > 0) html += '<div>🏪 전통시장(30%): <strong>' + result.tradDeduction.toLocaleString() + '원</strong></div>';
+      if (result.transitDeduction > 0) html += '<div>🚌 대중교통(40%): <strong>' + result.transitDeduction.toLocaleString() + '원</strong></div>';
+      if (result.bookDeduction > 0) html += '<div>📚 도서·공연(30%): <strong>' + result.bookDeduction.toLocaleString() + '원</strong></div>';
+    }
+    var totalDed = result.baseDeduction + result.tradDeduction + result.transitDeduction + result.bookDeduction;
+    html += '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">' +
+      '<div style="font-weight:bold;color:var(--accent-secondary);font-size:1rem;">💰 총 카드 공제액: <strong>' + totalDed.toLocaleString() + '원</strong></div>';
     html += '<hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:8px 0;">';
     // 추천 메시지
     if (result.remainingToThreshold > 0) {
@@ -1066,12 +1301,17 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (!result.isLimitReached) {
       html += '<div style="padding:8px;background:rgba(0,212,170,0.12);border-radius:6px;border-left:3px solid var(--accent-secondary);">' +
         '✅ 문턱(25%) 도달! 앞으로 <strong>체크카드/현금</strong>으로 <strong>' + result.additionalCashNeeded.toLocaleString() + '원</strong>을 더 사용하면<br>' +
-        '최대 한도 ' + result.limit.toLocaleString() + '원까지 30% 공제 가능합니다.<br>' +
+        '최대 한도 ' + result.limit.toLocaleString() + '원까지 추가 공제 가능합니다.<br>' +
         '<span style="font-size:0.75rem;opacity:0.7;">신용카드는 15% 공제율이므로, 초과분은 체크카드(30%)가 2배 효과적입니다.</span></div>';
     } else {
       html += '<div style="padding:8px;background:rgba(255,217,61,0.1);border-radius:6px;">' +
-        '✅ 공제 한도(<strong>' + result.limit.toLocaleString() + '원</strong>)에 이미 도달했습니다.<br>' +
-        '<span style="font-size:0.75rem;opacity:0.7;">더 이상 추가 카드 사용으로 인한 세액공제는 없습니다. 목적에 따라 자유롭게 사용하세요.</span></div>';
+        '✅ 기본 공제 한도(<strong>' + result.limit.toLocaleString() + '원</strong>)에 이미 도달했습니다.<br>' +
+        '<span style="font-size:0.75rem;opacity:0.7;">추가로 전통시장(30%), 대중교통(40%), 도서공연(30%)도 별도 한도 내에서 공제 가능합니다.</span></div>';
+    }
+    // 추가 공제 활용 팁
+    if (result.tradDeduction < result.addLimitTraditional && result.tradDeduction < Math.floor(traditional * 0.3)) {
+      html += '<div style="margin-top:6px;padding:6px;background:rgba(56,189,248,0.06);border-radius:6px;font-size:0.75rem;">' +
+        '💡 전통시장 추가 사용 시 최대 ' + (result.addLimitTraditional - result.tradDeduction).toLocaleString() + '원까지 30% 추가 공제 가능</div>';
     }
     document.getElementById('card-ratio-content').innerHTML = html;
   });
@@ -1318,7 +1558,8 @@ document.addEventListener('DOMContentLoaded', () => {
       'expense-revenue','hi-earned-income','hi-other-income','hi-regional-income','hi-regional-property',
       'prop-public-price','prop-market-price','gift-amount','gift-past','stock-exchange-rate',
       'inc-h-irp','inc-w-irp','pension-salary','pension-amount','pension-irp-amount',
-      'card-salary','card-usage-amount','card-cash-amount'
+      'card-salary','card-usage-amount','card-cash-amount',
+      'card-traditional','card-transit','card-book'
     ];
   newMoneyFields.forEach(function (id) {
     var el = document.getElementById(id);

@@ -16,9 +16,18 @@ const TaxCalculator = {
       { limit: 1000000000, rate: 0.42, deduction: 35940000 },
       { limit: Infinity, rate: 0.45, deduction: 65940000 }
     ],
+    // 2026년 개정: 비과세 한도 2배 상향 (일반 500만→500만, 서민 1,000만→1,000만)  
+    // ※ 2026년 세법 개정안 기준: 일반 500만, 서민 1,000만 (변동 없으나 납입한도 2배)
     isaLimits: {
       sub: 10000000,
       general: 5000000
+    },
+    // ISA 개편 (2026년): 납입한도 연 4,000만 원, 총 2억 원
+    isaNewLimits: {
+      annual: 40000000,
+      total: 200000000,
+      taxfreeGeneral: 5000000,
+      taxfreeSub: 10000000
     }
   },
 
@@ -376,11 +385,20 @@ const TaxCalculator = {
     }
 
     let housingDeduction = 0;
+    // 주택청약종합저축: 세대주 및 배우자 납입분 공제 (2025년 개정)
     if (totalSalary <= 70000000) {
-      housingDeduction += Math.min(1200000, Math.floor(housingSubscription * 0.4));
+      // housingSubscription = 본인 + 배우자 합산 납입액 (최대 300만 한도, 40% 공제)
+      var subLimit = 3000000;
+      var subDeductionBase = Math.min(housingSubscription, subLimit);
+      housingDeduction += Math.floor(subDeductionBase * 0.4);
     }
     housingDeduction += Math.min(4000000, Math.floor(housingLoanRepay * 0.4));
     housingDeduction += Math.min(18000000, mortgageInterest);
+
+    // 추가 소비 공제: 전통시장(30%), 대중교통(40%), 도서공연(30%) — 별도 한도
+    var traditionalMarket = opts.traditionalMarket || 0;
+    var publicTransit = opts.publicTransit || 0;
+    var bookPerformance = opts.bookPerformance || 0;
 
     const threshold = Math.floor(totalSalary * 0.25);
     const totalCardUsage = cardUsage + cashUsage;
@@ -399,7 +417,15 @@ const TaxCalculator = {
       cardDeduction = Math.min(limit, cardDeduction);
     }
 
-    const tempDeductions = personDeduction + cardDeduction + housingDeduction;
+    // 추가 공제: 기본 한도와 별도로 추가 한도 적용
+    var addLimitTrad = 3000000;
+    var addLimitTransit = 3000000;
+    var addLimitBook = totalSalary <= 70000000 ? 3000000 : 0;
+    var tradDeduction = Math.min(Math.floor(traditionalMarket * 0.3), addLimitTrad);
+    var transitDeduction = Math.min(Math.floor(publicTransit * 0.4), addLimitTransit);
+    var bookDeduction = addLimitBook > 0 ? Math.min(Math.floor(bookPerformance * 0.3), addLimitBook) : 0;
+
+    const tempDeductions = personDeduction + cardDeduction + tradDeduction + transitDeduction + bookDeduction + housingDeduction;
     const currentIncome = Math.max(0, grossIncome - tempDeductions);
     const ventureDeduction = this.calculateVentureInvestmentDeduction(currentIncome, ventureInvestment);
 
@@ -487,6 +513,9 @@ const TaxCalculator = {
       grossIncome,
       personDeduction,
       cardDeduction,
+      tradDeduction,
+      transitDeduction,
+      bookDeduction,
       housingDeduction,
       ventureDeduction,
       taxableIncome,
@@ -538,6 +567,168 @@ TaxCalculator.calculateGiftTax = function(opts) {
   if (tax < 0) tax = 0;
   var localTax = Math.floor(tax * 0.1);
   return { taxableGift: taxableGift, tax: tax, localTax: localTax, totalTax: tax + localTax, rate: bracket.rate * 100, exemption: exemption, cumulative: cumulative };
+};
+
+// ──────────────────────────────────────────────
+// 상속세 계산 (2025~2026년 개정 반영)
+// ──────────────────────────────────────────────
+TaxCalculator.calculateInheritanceTax = function(opts) {
+  var totalAsset = opts.totalAsset || 0;          // 피상속인 총 재산
+  var spouseShare = opts.spouseShare || 0;         // 배우자 실질 상속액 (0=최소공제)
+  var childCount = opts.childCount || 0;           // 자녀 수
+  var hasLivingSpouse = opts.hasLivingSpouse !== false; // 배우자 생존 여부
+  var isCoResidentHouse = opts.isCoResidentHouse || false; // 동거주택 상속공제 대상
+  var coResidentHouseValue = opts.coResidentHouseValue || 0; // 동거주택 가액
+  var financialAssetValue = opts.financialAssetValue || 0; // 순금융재산액
+  var financialDebt = opts.financialDebt || 0;     // 금융채무
+  var giftPast10Years = opts.giftPast10Years || 0; // 사전증여(10년 내)
+
+  // 1. 상속세 과세가액 = 총 재산 + 사전증여(10년 내 합산)
+  var grossEstate = totalAsset + giftPast10Years;
+
+  // 2. 각종 공제 계산
+  // 기초공제 2억 원
+  var basicDeduction = 200000000;
+
+  // 자녀공제: 1인당 5억 원 (개정: 5천만→5억)
+  var childDeduction = childCount * 500000000;
+
+  // 일괄공제 5억 원 (기초+자녀 합계보다 클 경우 선택)
+  var lumpSumDeduction = 500000000;
+  var personDeduction = Math.max(lumpSumDeduction, basicDeduction + childDeduction);
+
+  // 배우자 상속공제
+  var spouseDeduction = 0;
+  if (hasLivingSpouse) {
+    // 법정상속지분율 간이 계산 (자녀 수에 따라)
+    var legalShareRate = 1 / (childCount + 1.5); // 배우자 1.5 + 자녀 1/n
+    var legalShare = Math.floor(totalAsset * legalShareRate);
+    // 배우자 상속공제 = 실제 상속액과 법정지분율 한도 내에서 최대 30억
+    // 최소공제 5억 원 (실제 상속 0원이어도 적용)
+    var spouseMinDeduction = 500000000;
+    if (spouseShare > 0) {
+      // 실제 상속받은 금액이 있으면: 법정지분율 한도 내에서 실제 상속액 공제
+      var actualSpouseDeduction = Math.min(spouseShare, legalShare, 3000000000);
+      spouseDeduction = Math.max(spouseMinDeduction, actualSpouseDeduction);
+    } else {
+      spouseDeduction = spouseMinDeduction;
+    }
+  }
+
+  // 동거주택 상속공제
+  var coResidentDeduction = 0;
+  if (isCoResidentHouse) {
+    coResidentDeduction = Math.min(coResidentHouseValue, 600000000);
+  }
+
+  // 금융재산 상속공제
+  var netFinancial = Math.max(0, financialAssetValue - financialDebt);
+  var financialDeduction = 0;
+  if (netFinancial > 0) {
+    if (netFinancial <= 20000000) {
+      financialDeduction = netFinancial;
+    } else if (netFinancial <= 100000000) {
+      financialDeduction = 20000000;
+    } else {
+      financialDeduction = Math.min(Math.floor(netFinancial * 0.2), 200000000);
+    }
+  }
+
+  var totalDeductions = personDeduction + spouseDeduction + coResidentDeduction + financialDeduction;
+  var taxableEstate = Math.max(0, grossEstate - totalDeductions);
+
+  // 4. 상속세율 (개정: 최고 50% 구간 삭제 → 최고 40%)
+  var brackets = [
+    { limit: 200000000,   rate: 0.10, ded: 0 },
+    { limit: 500000000,   rate: 0.20, ded: 20000000 },
+    { limit: 1000000000,  rate: 0.30, ded: 70000000 },
+    { limit: 3000000000,  rate: 0.40, ded: 170000000 },
+    { limit: Infinity,    rate: 0.40, ded: 170000000 }
+  ];
+  var bracket = brackets[brackets.length - 1];
+  for (var i = 0; i < brackets.length; i++) {
+    if (taxableEstate <= brackets[i].limit) { bracket = brackets[i]; break; }
+  }
+  var tax = Math.max(0, Math.floor(taxableEstate * bracket.rate - bracket.ded));
+  var localTax = Math.floor(tax * 0.1);
+
+  return {
+    grossEstate: grossEstate,
+    basicDeduction: basicDeduction,
+    childDeduction: childDeduction,
+    personDeduction: personDeduction,
+    spouseDeduction: spouseDeduction,
+    coResidentDeduction: coResidentDeduction,
+    financialDeduction: financialDeduction,
+    totalDeductions: totalDeductions,
+    taxableEstate: taxableEstate,
+    tax: tax,
+    localTax: localTax,
+    totalTax: tax + localTax,
+    rate: bracket.rate * 100,
+    exemptionLimit: personDeduction + spouseDeduction,
+    isTaxFree: taxableEstate <= 0,
+    spouseLegalShare: hasLivingSpouse ? Math.floor(totalAsset / (childCount + 1.5)) : 0
+  };
+};
+
+// ──────────────────────────────────────────────
+// 혼인·출산 증여재산공제 (2024년 신설, 기본공제와 별도)
+// ──────────────────────────────────────────────
+/**
+ * 혼인/출산 증여재산공제 계산
+ * @param {Object} opts
+ * @param {number} opts.giftAmount       - 증여 금액
+ * @param {string} opts.reason           - 'marriage' | 'birth' | 'both'
+ * @param {number} opts.basicExemptionUsed - 10년 기본공제 사용액 (성인자녀 5천만)
+ * @param {number} opts.past10YrsGift    - 최근 10년 내 동일인 증여 합계
+ */
+TaxCalculator.calculateMarriageBirthGiftTax = function(opts) {
+  var giftAmount = opts.giftAmount || 0;
+  var reason = opts.reason || 'marriage';
+  var past10YrsGift = opts.past10YrsGift || 0;
+
+  // 기본 증여재산공제 (성인자녀 5천만)
+  var basicExemption = 50000000;
+
+  // 혼인·출산 특별공제 (통합 한도 1억 원, 중복 불가)
+  var specialExemption = 100000000;
+
+  var cumulative = giftAmount + past10YrsGift;
+  var totalExemption = basicExemption + specialExemption;
+  var taxableGift = Math.max(0, cumulative - totalExemption);
+
+  // 증여세율표
+  var brackets = [
+    { limit: 100000000,  rate: 0.10, ded: 0 },
+    { limit: 500000000,  rate: 0.20, ded: 10000000 },
+    { limit: 1000000000, rate: 0.30, ded: 60000000 },
+    { limit: 3000000000, rate: 0.40, ded: 160000000 },
+    { limit: Infinity,   rate: 0.50, ded: 460000000 }
+  ];
+  var bracket = brackets[brackets.length - 1];
+  for (var i = 0; i < brackets.length; i++) {
+    if (taxableGift <= brackets[i].limit) { bracket = brackets[i]; break; }
+  }
+  var tax = Math.max(0, Math.floor(taxableGift * bracket.rate - bracket.ded));
+  var localTax = Math.floor(tax * 0.1);
+
+  var isTaxFree = taxableGift <= 0;
+  return {
+    giftAmount: giftAmount,
+    basicExemption: basicExemption,
+    specialExemption: specialExemption,
+    totalExemption: totalExemption,
+    cumulative: cumulative,
+    taxableGift: taxableGift,
+    tax: tax,
+    localTax: localTax,
+    totalTax: tax + localTax,
+    rate: bracket.rate * 100,
+    isTaxFree: isTaxFree,
+    maxTaxFreeAmount: totalExemption,
+    양가활용가능: "양가(친정+시댁) 각각 1.5억씩 총 3억 원까지 증여세 없이 이전 가능"
+  };
 };
 
 TaxCalculator.calculatePropertyTax = function(opts) {
@@ -643,6 +834,209 @@ TaxCalculator.checkDependentStatus = function(opts) {
 };
 
 // ──────────────────────────────────────────────
+// ISA 개편 (2026년): 납입한도 2배, 국내투자형, ISA→연금 전환
+// ──────────────────────────────────────────────
+TaxCalculator.calculateISAOptimization = function(opts) {
+  var annualIncome = opts.annualIncome || 0;       // 연 납입액
+  var totalIncome = opts.totalIncome || 0;         // 총급여 (서민형 자격용)
+  var incomeType = opts.incomeType || 'wage';       // 소득유형
+  var isFinancialCompTax = opts.isFinancialCompTax || false; // 금융소득종합과세 대상?
+  var currentIsaType = opts.currentIsaType || 'general'; // 현재 ISA 유형
+  var isaBalance = opts.isaBalance || 0;            // 현재 ISA 잔고
+  var isMatured = opts.isMatured || false;          // 만기 도달?
+  var pensionTransfer = opts.pensionTransfer || 0;  // ISA→연금 전환 금액
+
+  // 1. 납입 한도 (개정: 연 4천만, 총 2억)
+  var annualLimit = 40000000;
+  var totalLimit = 200000000;
+
+  // 2. ISA 유형별 비과세 한도 (개정: 일반 500만, 서민 1,000만)
+  var isaType = currentIsaType;
+  if (incomeType === 'wage' && totalIncome > 50000000 && isaType === 'sub') {
+    isaType = 'general'; // 서민형 자격 상실 시 일반형
+  }
+  var taxfreeLimit = isaType === 'sub' ? 10000000 : 5000000;
+
+  // 3. 국내투자형 ISA (금융소득종합과세자 가입 가능)
+  var isDomesticType = opts.isDomesticType || false;
+  var domesticSeparatedRate = 0.14; // 14% 분리과세 (지방세 포함 15.4%)
+
+  // 4. 일반형 세제 혜택
+  var normalTaxfree = Math.min(isaBalance, taxfreeLimit);
+  var normalExcess = Math.max(0, isaBalance - taxfreeLimit);
+  var normalSeparatedTax = Math.floor(normalExcess * 0.09);
+
+  // 5. 국내투자형 세제 혜택 (종합과세자도 분리과세 14%로 종결)
+  var domesticTax = 0;
+  if (isDomesticType) {
+    domesticTax = Math.floor(isaBalance * domesticSeparatedRate);
+  }
+
+  // 6. ISA 만기 → 연금계좌 전환 세액공제 (전환액 10%, 최대 300만)
+  var pensionTransferCredit = 0;
+  if (isMatured && pensionTransfer > 0) {
+    var maxTransferCredit = 3000000;
+    pensionTransferCredit = Math.min(maxTransferCredit, Math.floor(pensionTransfer * 0.1));
+  }
+
+  return {
+    annualLimit: annualLimit,
+    totalLimit: totalLimit,
+    taxfreeLimit: taxfreeLimit,
+    isaType: isaType,
+    normalTaxfree: normalTaxfree,
+    normalExcess: normalExcess,
+    normalSeparatedTax: normalSeparatedTax,
+    domesticSeparatedRate: domesticSeparatedRate * 100,
+    domesticTax: domesticTax,
+    pensionTransferCredit: pensionTransferCredit,
+    recommendDomesticType: isFinancialCompTax,
+    summary: (isFinancialCompTax
+      ? "금융소득종합과세 대상자 → 국내투자형 ISA(14% 분리과세) 활용 추천"
+      : "일반 ISA 가입 가능 (연 " + annualLimit.toLocaleString() + "원 한도)")
+  };
+};
+
+// ──────────────────────────────────────────────
+// 고향사랑기부제 (2026년 개편: 20만 원 44% 구간 신설)
+// ──────────────────────────────────────────────
+TaxCalculator.calculateHometownDonation = function(opts) {
+  var donationAmount = opts.donationAmount || 0;
+  var isDisasterArea = opts.isDisasterArea || false;
+  var taxRate = opts.taxRate || 0.15; // 사용자 한계세율
+
+  // 2026년 개편 세액공제 구조
+  var credit = 0;
+  // 10만 원까지 100%
+  var first100k = Math.min(donationAmount, 100000);
+  credit += first100k;
+
+  // 10만 초과 20만 이하 44%
+  if (donationAmount > 100000) {
+    var secondBracket = Math.min(donationAmount - 100000, 100000);
+    credit += Math.floor(secondBracket * 0.44);
+  }
+
+  // 20만 초과분 16.5% (특별재난지역은 33%)
+  if (donationAmount > 200000) {
+    var thirdBracket = donationAmount - 200000;
+    var thirdRate = isDisasterArea ? 0.33 : 0.165;
+    credit += Math.floor(thirdBracket * thirdRate);
+  }
+
+  // 답례품 가치 (기부액의 30%)
+  var giftValue = Math.floor(donationAmount * 0.3);
+
+  // 총 체감 혜택
+  var totalBenefit = credit + giftValue;
+
+  // 최적 기부액 추천
+  var optimalAmount = 200000;
+  var optimalCredit = 100000 + Math.floor(100000 * 0.44);
+  var optimalGift = Math.floor(optimalAmount * 0.3);
+  var optimalBenefit = optimalCredit + optimalGift;
+
+  return {
+    donationAmount: donationAmount,
+    creditFirst100k: first100k,
+    creditSecondBracket: Math.max(0, Math.min(donationAmount - 100000, 100000) > 0 ? Math.floor(Math.min(donationAmount - 100000, 100000) * 0.44) : 0),
+    creditThirdBracket: donationAmount > 200000 ? Math.floor((donationAmount - 200000) * (isDisasterArea ? 0.33 : 0.165)) : 0,
+    totalCredit: credit,
+    giftValue: giftValue,
+    totalBenefit: totalBenefit,
+    netCost: donationAmount - totalBenefit,
+    effectiveReturnRate: donationAmount > 0 ? Math.round(totalBenefit / donationAmount * 100) : 0,
+    optimalAmount: optimalAmount,
+    optimalCredit: optimalCredit,
+    optimalGift: optimalGift,
+    optimalBenefit: optimalBenefit,
+    isOptimal: donationAmount === optimalAmount,
+    recommendation: "20만 원 기부 시 14.4만 원 환급 + 6만 원 답례품 = 원금 상회"
+  };
+};
+
+// ──────────────────────────────────────────────
+// 체육시설 이용료 소득공제 (2025.7월 신설)
+// ──────────────────────────────────────────────
+TaxCalculator.calculateSportsDeduction = function(opts) {
+  var totalSalary = opts.totalSalary || 0;
+  var facilityFee = opts.facilityFee || 0; // 수영장/체육단련장 이용료
+  var hasPT = opts.hasPT || false;          // PT 포함 여부
+
+  // 대상: 총급여 7,000만 원 이하
+  if (totalSalary > 70000000) {
+    return { isEligible: false, reason: "총급여 7,000만 원 초과로 공제 대상 아님" };
+  }
+
+  // PT 포함 시 50%만 시설 이용료로 인정
+  var eligibleAmount = hasPT ? Math.floor(facilityFee * 0.5) : facilityFee;
+  var deductionLimit = 3000000;
+  var deductionBase = Math.min(eligibleAmount, deductionLimit);
+  var deduction = Math.floor(deductionBase * 0.3);
+
+  return {
+    isEligible: true,
+    facilityFee: facilityFee,
+    hasPT: hasPT,
+    eligibleAmount: eligibleAmount,
+    deductionLimit: deductionLimit,
+    deduction: deduction,
+    taxableIncomeReduction: deduction
+  };
+};
+
+// ──────────────────────────────────────────────
+// 간주임대료 (2026년 개정: 2주택 고가 과세 신설)
+// ──────────────────────────────────────────────
+TaxCalculator.calculateDeemedRent = function(opts) {
+  var houseCount = opts.houseCount || 0;
+  var jeonseDeposits = opts.jeonseDeposits || 0;   // 전세보증금 합계
+  var hasHighPriceHouse = opts.hasHighPriceHouse || false; // 기준시가 12억 초과 주택 보유?
+  var smallHouseExclusion = opts.smallHouseExclusion || 0; // 소형주택 공제액 (40㎡/2억)
+  var interestRate = opts.interestRate || 0.02;     // 정기예금 이자율
+  var financialIncome = opts.financialIncome || 0;  // 금융수익
+
+  var deductionBase = 0;
+  var warningMsg = '';
+
+  if (houseCount >= 3) {
+    // 3주택 이상: 보증금 합계 3억 초과분 과세
+    deductionBase = 300000000;
+  } else if (houseCount === 2 && hasHighPriceHouse) {
+    // 2주택 + 고가주택(12억 초과) 보유: 보증금 합계 12억 초과분 과세 (2026.1.1~)
+    deductionBase = 1200000000;
+    warningMsg = '고가 2주택자 간주임대료 과세 대상 (2026.1.1부터)';
+  } else {
+    return { isTaxable: false, deemedRent: 0, reason: '간주임대료 과세 대상 아님' };
+  }
+
+  var excessDeposit = Math.max(0, jeonseDeposits - deductionBase - smallHouseExclusion);
+  if (excessDeposit <= 0) {
+    return { isTaxable: false, deemedRent: 0, reason: '보증금 합계가 공제 기준 이하' };
+  }
+
+  var deemedRent = Math.max(0, Math.floor(excessDeposit * 0.6 * interestRate) - financialIncome);
+  var incomeTax = Math.floor(deemedRent * 0.15); // 임대소득세 단순 추정 (15%)
+  var localTax = Math.floor(incomeTax * 0.1);
+
+  return {
+    isTaxable: true,
+    houseCount: houseCount,
+    jeonseDeposits: jeonseDeposits,
+    deductionBase: deductionBase,
+    smallHouseExclusion: smallHouseExclusion,
+    excessDeposit: excessDeposit,
+    interestRate: interestRate,
+    financialIncome: financialIncome,
+    deemedRent: deemedRent,
+    incomeTax: incomeTax,
+    localTax: localTax,
+    totalTax: incomeTax + localTax,
+    warningMsg: warningMsg
+  };
+};
+
+// ──────────────────────────────────────────────
 // 연금저축/IRP 세액공제 최적화
 // ──────────────────────────────────────────────
 /**
@@ -682,67 +1076,120 @@ TaxCalculator.calculatePensionOptimization = function(opts) {
 };
 
 // ──────────────────────────────────────────────
-// 신용카드 vs 체크카드 황금비율 계산기
+// 주택청약종합저축 소득공제 (2025년 개정: 배우자 납입분 추가)
+// ──────────────────────────────────────────────
+TaxCalculator.calculateHousingSubscriptionDeduction = function(opts) {
+  var totalSalary = opts.totalSalary || 0;
+  var isHouseholder = opts.isHouseholder !== false;
+  var spousePayment = opts.spousePayment || 0;  // 배우자 납입액
+  var myPayment = opts.myPayment || 0;          // 본인 납입액
+  var isNoHouse = opts.isNoHouse !== false;      // 무주택?
+
+  // 대상: 총급여 7,000만 원 이하 무주택 세대주 (개정: 배우자 추가)
+  if (totalSalary > 70000000) {
+    return { isEligible: false, reason: "총급여 7,000만 원 초과" };
+  }
+  if (!isNoHouse) {
+    return { isEligible: false, reason: "유주택자" };
+  }
+
+  // 본인 납입분 (세대주만 가능)
+  var myDeductionBase = isHouseholder ? Math.min(myPayment, 3000000) : 0;
+  var myDeduction = Math.floor(myDeductionBase * 0.4);
+
+  // 배우자 납입분 (개정: 세대주 배우자도 공제 가능)
+  var spouseDeductionBase = isHouseholder ? Math.min(spousePayment, 3000000) : 0;
+  var spouseDeduction = Math.floor(spouseDeductionBase * 0.4);
+
+  var totalDeduction = myDeduction + spouseDeduction;
+
+  return {
+    isEligible: true,
+    myPayment: myPayment,
+    myDeductionBase: myDeductionBase,
+    myDeduction: myDeduction,
+    spousePayment: spousePayment,
+    spouseDeductionBase: spouseDeductionBase,
+    spouseDeduction: spouseDeduction,
+    totalDeduction: totalDeduction,
+    totalSavings: Math.floor(totalDeduction * 0.15) // 한계세율 15% 가정 시 절세액
+  };
+};
+
+// ──────────────────────────────────────────────
+// 신용카드 vs 체크카드 황금비율 계산기 (전통시장·대중교통·도서공연 추가 공제 반영)
 // ──────────────────────────────────────────────
 /**
  * @param {Object} opts
- * @param {number} opts.totalSalary   — 총급여
- * @param {number} opts.cardUsage     — 현재까지 신용카드 사용액
- * @param {number} opts.cashUsage     — 현재까지 체크카드/현금 사용액
+ * @param {number} opts.totalSalary       — 총급여
+ * @param {number} opts.cardUsage         — 신용카드 사용액
+ * @param {number} opts.cashUsage         — 체크카드/현금 사용액
+ * @param {number} opts.traditionalMarket — 전통시장 사용액 (별도 30% + 추가한도)
+ * @param {number} opts.publicTransit     — 대중교통 사용액 (별도 40% + 추가한도)
+ * @param {number} opts.bookPerformance   — 도서·공연 사용액 (별도 30% + 추가한도, 7천만↓)
  * @returns {Object}
  */
 TaxCalculator.calculateCardOptimalMix = function(opts) {
   var totalSalary = opts.totalSalary || 0;
   var cardUsage = opts.cardUsage || 0;
   var cashUsage = opts.cashUsage || 0;
+  var traditionalMarket = opts.traditionalMarket || 0;
+  var publicTransit = opts.publicTransit || 0;
+  var bookPerformance = opts.bookPerformance || 0;
   var threshold = Math.floor(totalSalary * 0.25);
   var totalUsage = cardUsage + cashUsage;
 
-  // 공제 한도
+  // 기본 공제 한도
   var limit;
   if (totalSalary > 120000000) limit = 2000000;
   else if (totalSalary > 70000000) limit = 2500000;
   else limit = 3000000;
-  // 추가 한도: 전통시장/대중교통 등 (여기서는 기본 한도만 사용)
 
-  // 1. 현재 상태 분석
+  // 추가 한도: 전통시장 300만, 대중교통 300만, 도서공연 300만 (7천만↓)
+  var addLimitTraditional = 3000000;
+  var addLimitTransit = 3000000;
+  var addLimitBook = totalSalary <= 70000000 ? 3000000 : 0;
+
+  // 1. 기본 공제 계산 (일반 신용카드 + 체크카드)
   var currentExcess = Math.max(0, totalUsage - threshold);
-  var currentDeduction = 0;
+  var baseDeduction = 0;
   if (currentExcess > 0) {
     if (cardUsage >= threshold) {
-      currentDeduction = Math.floor((cardUsage - threshold) * 0.15) + Math.floor(cashUsage * 0.3);
+      baseDeduction = Math.floor((cardUsage - threshold) * 0.15) + Math.floor(cashUsage * 0.3);
     } else {
-      currentDeduction = Math.floor(currentExcess * 0.3);
+      baseDeduction = Math.floor(currentExcess * 0.3);
     }
-    currentDeduction = Math.min(limit, currentDeduction);
+    baseDeduction = Math.min(limit, baseDeduction);
   }
 
-  // 2. 최적 전략 계산
-  var remainingToThreshold = Math.max(0, threshold - totalUsage);
-  // 한도 도달까지 추가 공제 가능한 금액 = 공제한도 / 최고효율(30%) ... 단, 실제 추가 납입 필요금액은 더 큼
-  // 현재 deductions이 이미 한도에 도달했는지 확인
-  var isLimitReached = currentDeduction >= limit;
+  // 2. 추가 공제 계산 (각 항목별 별도 한도, 기본공제 한도와 별개)
+  // 전통시장: 30% 공제율 (체크카드는 30% 동일, 추가한도 내)
+  var tradDeduction = Math.min(Math.floor(traditionalMarket * 0.3), addLimitTraditional);
 
-  // 최적: threshold 도달 후 초과분은 체크카드/현금에 몰빵 (30%)
-  var deductionGap = limit - currentDeduction;
+  // 대중교통: 40% 공제율 (체크카드도 40%)
+  var transitDeduction = Math.min(Math.floor(publicTransit * 0.4), addLimitTransit);
+
+  // 도서·공연: 30% 공제율 (7천만 이하만)
+  var bookDeduction = addLimitBook > 0 ? Math.min(Math.floor(bookPerformance * 0.3), addLimitBook) : 0;
+
+  var totalDeduction = baseDeduction + tradDeduction + transitDeduction + bookDeduction;
+
+  // 3. 최적 전략 계산
+  var remainingToThreshold = Math.max(0, threshold - totalUsage);
+  var isLimitReached = baseDeduction >= limit;
+  var deductionGap = limit - baseDeduction;
   var additionalCashNeeded = 0;
   var additionalCardNeeded = 0;
-  var remainingLimitSpace = 0;
 
   if (!isLimitReached && totalUsage >= threshold) {
-    // threshold 넘었는데 한도 안 찼으면: 추가 체크카드 사용 추천
     additionalCashNeeded = Math.ceil(deductionGap / 0.3);
-    remainingLimitSpace = additionalCashNeeded;
   } else if (!isLimitReached && totalUsage < threshold) {
-    // threshold 미달: 신용카드로 threshold까지 채우고, 그 후 체크카드
     additionalCardNeeded = remainingToThreshold;
-    var afterThresholdExcess = Math.ceil(deductionGap / 0.3);
-    additionalCashNeeded = afterThresholdExcess;
+    additionalCashNeeded = Math.ceil(deductionGap / 0.3);
   }
 
-  // 현재까지 사용 중 최적 공제율 (effective rate on excess)
-  var effectiveRate = currentExcess > 0 && currentDeduction > 0
-    ? Math.floor(currentDeduction / currentExcess * 1000) / 10
+  var effectiveRate = currentExcess > 0 && baseDeduction > 0
+    ? Math.floor(baseDeduction / currentExcess * 1000) / 10
     : 0;
 
   return {
@@ -751,21 +1198,25 @@ TaxCalculator.calculateCardOptimalMix = function(opts) {
     totalUsage: totalUsage,
     cardUsage: cardUsage,
     cashUsage: cashUsage,
-    currentExcess: currentExcess,
-    currentDeduction: currentDeduction,
+    traditionalMarket: traditionalMarket,
+    publicTransit: publicTransit,
+    bookPerformance: bookPerformance,
+    baseDeduction: baseDeduction,
+    tradDeduction: tradDeduction,
+    transitDeduction: transitDeduction,
+    bookDeduction: bookDeduction,
+    totalDeduction: totalDeduction,
     limit: limit,
+    addLimitTraditional: addLimitTraditional,
+    addLimitTransit: addLimitTransit,
+    addLimitBook: addLimitBook,
     isLimitReached: isLimitReached,
     remainingToThreshold: remainingToThreshold,
     additionalCardNeeded: additionalCardNeeded,
     additionalCashNeeded: additionalCashNeeded,
     effectiveRate: effectiveRate,
-    // 추천 문장용
     overThreshold: totalUsage >= threshold,
-    optimalCardToUse: totalUsage < threshold
-      ? remainingToThreshold  // threshold 달성까지 필요한 카드액
-      : 0,
-    optimalCashToUse: (isLimitReached || totalUsage < threshold)
-      ? additionalCashNeeded  // or 0 if limit already reached
-      : additionalCashNeeded
+    optimalCardToUse: totalUsage < threshold ? remainingToThreshold : 0,
+    optimalCashToUse: additionalCashNeeded
   };
 };

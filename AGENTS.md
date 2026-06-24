@@ -34,16 +34,24 @@ Vanilla JS single-page tax calculator. No framework, no build step, no test suit
 ## Tax law specifics implemented
 
 - ISA: general (₩5M limit) / 서민형 (₩10M limit, requires income ≤₩50M salary or ≤₩38M total)
+- ISA 2026 reform: annual limit ₩40M (2x), total ₩200M; domestic-investment type for comprehensive taxation filers (14% separate taxation)
+- ISA→pension rollover: 10% tax credit on transfer amount (max ₩3M), separate from ₩9M pension limit
 - Bond separate taxation: effective 30% (national 27.27% + local 2.73%)
 - Couple year-end optimization: tests all dependent assignment combinations
 - 1-house non-taxable: requires holding period ≥24 months
 - Gift/sell simulation: 이월과세 applies if sold within 10 years of gift
 - Gift tax (증여세): 10~50% progressive, 10-year aggregation, spouse ₩6B / adult child ₩50M / minor ₩20M exemption
+- Marriage/childbirth gift exemption: additional ₩100M on top of basic ₩50M (total ₩150M tax-free)
+- Inheritance tax (2025 reform): child deduction ₩500M/person (10x↑), max rate 40% (50% bracket removed), co-resident house deduction up to ₩600M, financial asset deduction 20% up to ₩200M
 - Property tax (재산세): 0.1~0.4% progressive on 60% public price
 - Comprehensive real estate tax (종부세): 0.6~3.0% progressive, 1-house ₩1.2B / multi-house ₩900M deduction
 - Health insurance (건강보험료): 7.15% rate + 12.95% long-term care, 소득월액보험료 for non-wage income >₩20M
 - Dependent status (피부양자): income limit ₩50M (wage) / ₩34M (non-wage), property threshold
 - Business expense ratios: 12 industry codes with simple/standard rates for N잡러 comparison
+- Hometown donation (2026 reform): 44% credit for ₩100K~₩200K bracket, disaster area 33% for excess
+- Sports facility deduction (2025.7 new): 30% deduction up to ₩3M limit, ₩70M salary cap, PT 50% only
+- Deemed rent (2026 new): 2-house + high-price(₩1.2B+) owners, deposit excess over ₩1.2B taxed
+- Housing subscription: spouse contribution now eligible for deduction (2025 reform)
 
 ## Common pitfalls
 
@@ -55,6 +63,11 @@ Vanilla JS single-page tax calculator. No framework, no build step, no test suit
 - ISA 서민형(`sub`) requires salary ≤₩50M (wage) or total income ≤₩38M — validation blocks calculation if violated
 - 해외주식 증여 시뮬레이션 결과에 부당행위계산부인 경고가 포함됨 (`gs-stock-warning` 토글)
 - Bond separate tax: `bondSeparatedTax = bondSeparated * (30/110)`, local tax (10%) is added separately at the end
+- `calculateInheritanceTax()` uses 2025 reform rates (child ₩500M, max 40%) — set `hasLivingSpouse: false` for single
+- `calculateMarriageBirthGiftTax()`: special ₩100M exemption is a ONE-TIME combined limit for marriage OR birth, not both
+- `calculateHometownDonation()` optimal amount is ₩200,000 (14.4만 credit + 6만 gift = 20.4만 benefit)
+- `calculateSportsDeduction()`: PT package → only 50% of total fee counts toward deduction limit
+- Deemed rent: 2-house + high-price rules effective 2026.1.1; small houses (≤40㎡, ≤₩200M) excluded until 2026.12.31
 
 ## Features added after reviewfix
 
@@ -64,3 +77,10 @@ Vanilla JS single-page tax calculator. No framework, no build step, no test suit
 | 의료비 몰아주기 시각화 | `index.html:295-312` / `app.js:721-739` | 남편 vs 아내 청구 시 공제액 막대그래프 비교 |
 | 증여 타임라인 | `index.html:493-510` / `app.js:753-772` | 10년 주기 비과세 증여 마스터플랜 생성 |
 | 통합 리포트 공유 | `index.html:315-323` / `app.js:741-751` | 가족 합산 요약 리포트 클립보드 복사 |
+| 상속세 계산기 | `tax-calculator.js` / `index.html` / `app.js` | 자녀공제 5억(10배↑), 최고세율 40%, 동거주택·금융재산 공제 |
+| 혼인·출산 증여공제 | `tax-calculator.js` / `index.html` / `app.js` | 기본 5천만+특별 1억=총 1.5억 비과세, 양가 3억 |
+| ISA 최적화 | `tax-calculator.js` / `index.html` / `app.js` | 납입한도 2배, 국내투자형(14% 분리), 연금전환 10% |
+| 고향사랑기부제 20만 전략 | `tax-calculator.js` / `index.html` / `app.js` | 44% 구간 신설, 특재 33%, 20만 최적안 |
+| 체육시설 이용료 공제 | `tax-calculator.js` / `index.html` / `app.js` | 30% 소득공제, PT 50% 인정, 7천만 한도 |
+| 간주임대료 (2주택 고가) | `tax-calculator.js` / `index.html` / `app.js` | 2주택+12억↑ 보유 시 보증금 12억 초과 과세 |
+| 주택청약 배우자 확대 | `tax-calculator.js` | 2025년 개정: 배우자 납입분도 소득공제 가능 |

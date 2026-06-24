@@ -229,11 +229,11 @@ const TaxAdvisor = {
         id: 'yearend_donation',
         type: 'success',
         priority: 'high',
-        saving: 130000,
-        title: "🎁 기적의 수익률 '고향사랑기부제'",
-        desc: "지방자치단체에 10만 원을 기부하면 10만 원은 전액 소득세에서 공제되어 100% 환급되고, 추가로 3만 원 상당의 답례품까지 받을 수 있는 강력한 절세 기부금 제도입니다.",
-        actionText: "10만 원 기부 반영",
-        actionValue: 100000
+        saving: 204000,
+        title: "🎁 고향사랑기부제 '20만 원 전략' (2026년 개편)",
+        desc: "2026년부터 20만 원까지 44% 세액공제(10만 초과분)가 신설됩니다. 20만 원 기부 시 14.4만 원 세금환급 + 6만 원 답례품 = 총 20.4만 원 혜택으로 원금을 상회하는 '기적의 절세'가 가능합니다.",
+        actionText: "20만 원 기부 반영",
+        actionValue: 200000
       });
     }
 
@@ -246,6 +246,111 @@ const TaxAdvisor = {
         title: "🏠 무주택자 월세 세액공제 (15~17%)",
         desc: "총급여 8,000만 원 이하의 무주택 세대주라면 지출하신 월세액의 최대 17%를 세액공제받을 수 있습니다. 주민등록등본상 주소지와 임대차계약서의 주소지가 같아야 하며 이체증빙을 통해 쉽게 청구할 수 있습니다.",
         actionText: "임의 월세 50만 적용"
+      });
+    }
+
+    return advice;
+  },
+
+  // 5. 상속세 절세 추천
+  getInheritanceAdvice(inputs, results) {
+    const advice = [];
+    if (!results || results.totalTax <= 0) return advice;
+
+    // 자녀공제 활용 (5억 × 자녀 수)
+    if (inputs.childCount > 0) {
+      advice.push({
+        id: 'inherit_child_deduction',
+        type: 'success',
+        priority: 'high',
+        saving: Math.floor(results.childDeduction * 0.2),
+        title: "👨‍👩‍👧‍👦 상속세 자녀공제 5억 원 (10배 상향)",
+        desc: `2025년 개정으로 자녀 1인당 공제액이 5,000만 원에서 5억 원으로 대폭 상향되었습니다. 자녀 ${inputs.childCount}명 기준 ${(results.childDeduction).toLocaleString()}원 공제 가능. 기존 일괄공제(5억)보다 유리합니다.`,
+        actionText: "자세히 보기"
+      });
+    }
+
+    // 배우자 공제 전략
+    if (inputs.hasLivingSpouse !== false && results.spouseDeduction > 0) {
+      advice.push({
+        id: 'inherit_spouse_strategy',
+        type: 'info',
+        priority: 'high',
+        saving: 0,
+        title: "💑 배우자 상속공제 최대화 전략",
+        desc: `배우자 법정상속지분(${results.spouseLegalShare.toLocaleString()}원)까지 실제 상속 시 최대 30억 원 공제 가능. 자녀에게만 상속 시 공제액이 줄어드니 배우자에게 법정지분 최대치로 우선 배분하세요.`,
+        actionText: "자세히 보기"
+      });
+    }
+
+    // 면세점 초과 시 추가 전략
+    if (!results.isTaxFree && inputs.totalAsset > 1700000000) {
+      advice.push({
+        id: 'inherit_financial_deduction',
+        type: 'success',
+        priority: 'medium',
+        saving: results.financialDeduction > 0 ? Math.floor(results.financialDeduction * 0.2) : 0,
+        title: "💰 금융재산 상속공제 (최대 2억 원)",
+        desc: "순금융재산(예적금·주식)의 20%를 최대 2억 원까지 추가 공제 가능합니다. 상속세 납부 재원 마련 겸 종신보험·예적금 포트폴리오를 일정 규모(10억 수준) 이상 유지하세요.",
+        actionText: "금융재산 공제 적용"
+      });
+    }
+
+    // 혼인·출산 증여공제
+    advice.push({
+      id: 'inherit_marriage_gift',
+      type: 'success',
+      priority: 'high',
+      saving: 15000000,
+      title: "💍 혼인·출산 증여재산공제 (최대 1.5억 원 비과세)",
+      desc: "성인 자녀 결혼(전후 2년) 또는 출산(후 2년) 시 기존 5천만 원 기본공제 + 별도 1억 원 특별공제로 총 1.5억 원까지 증여세 없이 현금 이전 가능합니다. 양가 활용 시 최대 3억 원!",
+      actionText: "증여 시뮬레이터 열기"
+    });
+
+    // 동거주택 상속공제
+    if (inputs.isCoResidentHouse) {
+      advice.push({
+        id: 'inherit_coresident',
+        type: 'success',
+        priority: 'medium',
+        saving: Math.floor(Math.min(inputs.coResidentHouseValue || 0, 600000000) * 0.2),
+        title: "🏠 동거주택 상속공제 (최대 6억 원)",
+        desc: "부모와 10년 이상 동거한 무주택 자녀가 해당 주택을 상속받을 경우 주택 가액의 100%를 최대 6억 원까지 공제받을 수 있습니다.",
+        actionText: "자세히 보기"
+      });
+    }
+
+    return advice;
+  },
+
+  // 6. ISA 개편 절세 추천
+  getISAAdvice(inputs, results) {
+    const advice = [];
+    if (!results) return advice;
+
+    // 국내투자형 ISA 추천 (금융소득종합과세자)
+    if (inputs.isFinancialCompTax) {
+      advice.push({
+        id: 'isa_domestic_type',
+        type: 'success',
+        priority: 'high',
+        saving: Math.floor((inputs.financialIncome || 50000000) * (0.495 - 0.154)),
+        title: "💎 국내투자형 ISA (종합과세자 분리과세 14%)",
+        desc: "금융소득종합과세 대상자는 국내투자형 ISA에 가입하여 계좌 내 소득을 14% 분리과세로 종결할 수 있습니다. 최고세율 49.5% 대비 최대 35.5%p 절감 효과가 있습니다.",
+        actionText: "ISA 최적화 계산"
+      });
+    }
+
+    // ISA→연금 전환 세액공제
+    if (inputs.isMatured && inputs.pensionTransfer > 0) {
+      advice.push({
+        id: 'isa_pension_rollover',
+        type: 'success',
+        priority: 'high',
+        saving: results.pensionTransferCredit || 0,
+        title: "🔄 ISA 만기자금 연금계좌 전환 (10% 추가 세액공제)",
+        desc: `ISA 만기자금 ${(inputs.pensionTransfer || 0).toLocaleString()}원을 연금계좌로 이체 시 전환액의 10%(최대 300만 원)를 추가 세액공제받을 수 있습니다. 기존 900만 원 한도와 별도 적용!`,
+        actionText: "전환 세액공제 적용"
       });
     }
 
