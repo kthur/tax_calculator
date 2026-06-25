@@ -75,6 +75,49 @@ document.addEventListener('DOMContentLoaded', () => {
     el.value = formatNumberWithCommas(val);
   };
 
+  function showInlineError(containerId, message) {
+    const el = document.getElementById(containerId);
+    if (!el) return;
+    el.textContent = message;
+    el.style.display = 'block';
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function clearInlineErrors() {
+    document.querySelectorAll('.form-error-inline').forEach(el => {
+      el.textContent = '';
+      el.style.display = 'none';
+    });
+  }
+
+  function showAccordionSection(sectionId) {
+    const section = document.getElementById(sectionId);
+    if (!section) return;
+    section.style.display = 'block';
+    section.classList.add('active');
+  }
+
+  function initAccordion() {
+    document.querySelectorAll('.accordion-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const section = header.closest('.accordion-section');
+        if (section) section.classList.toggle('active');
+      });
+    });
+  }
+
+  function showCalcStatus(show) {
+    const el = document.getElementById('calc-status-income');
+    if (!el) return;
+    el.classList.toggle('idle', !show);
+  }
+
+  function toggleEmptyState(hasData) {
+    const el = document.getElementById('res-report-empty');
+    if (!el) return;
+    el.style.display = hasData ? 'none' : 'block';
+  }
+
   // Flag to prevent save-during-load loop
   let isLoadingState = false;
 
@@ -735,7 +778,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btnAddCoupleDep.addEventListener('click', () => {
     const currentCount = optCoupleYePeople.querySelectorAll('.person-card').length;
     if (currentCount >= 5) {
-      alert("부양가족은 최대 5명까지 설정할 수 있습니다.");
+      showInlineError("income-form-error", "부양가족은 최대 5명까지 설정할 수 있습니다.");
       return;
     }
     const nextId = currentCount + 1;
@@ -839,15 +882,16 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function validateIncomeInputs(d) {
-    if (d.aSalary < 0 || d.bSalary < 0) { alert("소득금액은 0원 이상이어야 합니다."); return false; }
-    if (d.aIsaType === "sub" && d.aSalary > 50000000 && d.aType === "wage") { alert("배우자 A ISA 서민형 자격 없음 (급여 5,000만 초과)"); return false; }
-    if (d.bIsaType === "sub" && d.bSalary > 50000000 && d.bType === "wage") { alert("배우자 B ISA 서민형 자격 없음 (급여 5,000만 초과)"); return false; }
+    clearInlineErrors();
+    if (d.aSalary < 0 || d.bSalary < 0) { showInlineError("income-form-error", "소득금액은 0원 이상이어야 합니다."); return false; }
+    if (d.aIsaType === "sub" && d.aSalary > 50000000 && d.aType === "wage") { showInlineError("income-form-error", "배우자 A ISA 서민형 자격 없음 (급여 5,000만 초과)"); return false; }
+    if (d.bIsaType === "sub" && d.bSalary > 50000000 && d.bType === "wage") { showInlineError("income-form-error", "배우자 B ISA 서민형 자격 없음 (급여 5,000만 초과)"); return false; }
     const allNonNeg = [d.aCard, d.bCard, d.aYellow, d.bYellow, d.aPension, d.bPension,
       d.aFinancialGen, d.aFinancialOverseas, d.aIsaIncome, d.aBondSeparated,
       d.bFinancialGen, d.bFinancialOverseas, d.bIsaIncome, d.bBondSeparated,
       d.aVentureInvestment, d.aHousingSubscription, d.aHousingLoanRepay,
       d.bVentureInvestment, d.bHousingSubscription, d.bHousingLoanRepay];
-    if (allNonNeg.some(v => v < 0)) { alert("모든 입력금액은 0원 이상이어야 합니다."); return false; }
+    if (allNonNeg.some(v => v < 0)) { showInlineError("income-form-error", "모든 입력금액은 0원 이상이어야 합니다."); return false; }
     return true;
   }
 
@@ -857,14 +901,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const depNames = [];
     for (const card of cards) {
       const name = (card.querySelector(".opt-dep-name").value || "").trim();
-      if (!name) { alert("부양가족 이름을 입력해주세요."); return null; }
-      if (depNames.includes(name)) { alert("중복된 부양가족 이름: " + name); return null; }
+      if (!name) { showInlineError("income-form-error", "부양가족 이름을 입력해주세요."); return null; }
+      if (depNames.includes(name)) { showInlineError("income-form-error", "중복된 부양가족 이름: " + name); return null; }
       depNames.push(name);
       const cardVal = parseVal(card.querySelector(".opt-dep-card"));
       const medicalVal = parseVal(card.querySelector(".opt-dep-medical"));
       const eduVal = parseVal(card.querySelector(".opt-dep-edu"));
       const studentLoanRepayVal = parseVal(card.querySelector(".opt-dep-student-loan"));
-      if (cardVal < 0 || medicalVal < 0 || eduVal < 0 || studentLoanRepayVal < 0) { alert("부양가족 지출액은 0원 이상이어야 합니다."); return null; }
+      if (cardVal < 0 || medicalVal < 0 || eduVal < 0 || studentLoanRepayVal < 0) { showInlineError("income-form-error", "부양가족 지출액은 0원 이상이어야 합니다."); return null; }
       dependents.push({
         name, relation: card.querySelector(".opt-dep-relation").value,
         card: cardVal, medical: medicalVal, edu: eduVal,
@@ -988,7 +1032,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("res-card-nav-content").innerHTML =
       (d.aCard >= aThreshold + aCardLimit ? "배우자 A 카드공제 한도 도달. " : "배우자 A 카드 " + Math.max(0, aThreshold + aCardLimit - d.aCard).toLocaleString() + "원 추가 사용 가능. ") +
       (d.bCard >= bThreshold + bCardLimit ? "배우자 B 카드공제 한도 도달." : "배우자 B 카드 " + Math.max(0, bThreshold + bCardLimit - d.bCard).toLocaleString() + "원 추가 사용 가능.");
-    document.getElementById("res-card-navigation").style.display = "block";
+    showAccordionSection("acc-card-nav");
   }
 
   function renderMedicalComparison(d, dependents) {
@@ -1002,7 +1046,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("med-tax-a").textContent = aMed.toLocaleString() + " 원";
     document.getElementById("med-tax-b").textContent = bMed.toLocaleString() + " 원";
     document.getElementById("res-medical-desc").textContent = aMed > bMed ? "배우자 A 청구 유리" : bMed > aMed ? "배우자 B 청구 유리" : "차이 없음";
-    document.getElementById("res-medical-comparison").style.display = "block";
+    showAccordionSection("acc-medical");
   }
 
   function renderFamilySummary(d, aResult, bResult, best, optResult, dependents) {
@@ -1023,7 +1067,7 @@ document.addEventListener('DOMContentLoaded', () => {
       '<div style="font-weight:bold; font-size:1rem; color:var(--accent-gold);">' + savings.toLocaleString() + ' 원</div></div></div>' +
       '<div style="font-size:0.78rem; opacity:0.7; line-height:1.5;">부양가족 ' + dependents.length + '명 · 배우자 A 세율 ' + aResult.bracketRate + '% · 배우자 B 세율 ' + bResult.bracketRate + '%<br>' +
       '소득공제 합계: ' + (aDed + bDed).toLocaleString() + '원 · 결정세액 합계: ' + (best ? best.aResult.totalTax + best.bResult.totalTax : aResult.totalTax + bResult.totalTax).toLocaleString() + '원</div>';
-    document.getElementById("res-family-summary").style.display = "block";
+    showAccordionSection("acc-family");
   }
 
   // 1. 종합소득세 & 연말정산 원스톱 대통합 계산
@@ -1033,6 +1077,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!validateIncomeInputs(d)) return;
     const dependents = collectDependents();
     if (!dependents) return;
+
+    showCalcStatus(true);
+    toggleEmptyState(false);
 
     const aResult = TaxCalculator.calculateComprehensiveIncome(buildSpouseCalcOpts(d, "a"));
     const bResult = TaxCalculator.calculateComprehensiveIncome(buildSpouseCalcOpts(d, "b"));
@@ -1048,6 +1095,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCardNavigation(d);
     renderMedicalComparison(d, dependents);
     renderFamilySummary(d, aResult, bResult, best, optResult, dependents);
+
+    showCalcStatus(false);
   });
 
   // 📤 리포트 복사하기
@@ -1526,6 +1575,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener('input', debouncedGiftSell); el.addEventListener('change', debouncedGiftSell); }
   });
+
+  // 아코디언 초기화
+  initAccordion();
 
   // 초기 실행 - use setTimeout to ensure DOM is fully settled after localStorage restore
   setTimeout(() => {
