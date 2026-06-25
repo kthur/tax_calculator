@@ -15,20 +15,6 @@ const TaxAdvisor = {
 
     if (totalTax <= 0) return advice;
 
-    // ① 벤처기업 투자 소득공제 추천
-    if (ventureInvestment === 0 && bracketRate >= 24) {
-      advice.push({
-        id: 'income_venture_investment',
-        type: 'success',
-        priority: 'high',
-        saving: Math.floor(30000000 * (bracketRate / 100)),
-        title: "🚀 고소득자 벤처기업 투자 소득공제 (최대 100% 공제)",
-        desc: `현재 고객님의 한계세율은 ${bracketRate}%로 높은 편입니다. 벤처투자조합이나 벤처기업에 출자 시 3,000만 원 이하 금액에 대해서는 100% 전액 소득공제가 적용되어 납부세액을 크게 줄일 수 있습니다. (3천만 원 투자 시 약 ${(30000000 * (bracketRate / 100)).toLocaleString()}원 절감)`,
-        actionText: "벤처투자 3,000만 원 적용",
-        actionValue: 30000000
-      });
-    }
-
     // ② 금융소득 종합과세 한도 도달 경고 및 명의분산 권고
     const compFinancialBase = financialGeneral + financialOverseas;
     if (isFinancialCompTax) {
@@ -205,7 +191,7 @@ const TaxAdvisor = {
         type: 'success',
         priority: 'high',
         saving: Math.floor(30000000 * 0.38),
-        title: "🚀 연봉 8,800만 초과 고소득자 벤처투자 소득공제",
+        title: "🚀 연봉 8,800만 초과 벤처투자 소득공제",
         desc: "연봉이 높아 높은 누진세율(38% 이상)이 적용되는 직장인은 벤처투자조합 출자 시 3,000만 원 이하 한도로 100% 소득공제를 받아 세금을 대규모로 즉시 환급받을 수 있는 기회가 제공됩니다. (3천만 원 투자 시 약 1,140만 원 환급)",
         actionText: "벤처투자 3,000만 원 적용",
         actionValue: 30000000
