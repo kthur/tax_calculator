@@ -4,7 +4,7 @@
 
 const TaxOptimizer = {
   // 1. 맞벌이 부부 연말정산 몰아주기 (부양가족 배정 조합 시뮬레이션)
-  optimizeCoupleYearEnd({ husband, wife, dependents }) {
+  optimizeCoupleYearEnd({ personA, personB, dependents }) {
     const depCount = dependents.length;
     let bestAssignment = null;
     let minCoupleTax = Infinity;
@@ -12,172 +12,172 @@ const TaxOptimizer = {
     const maxCombinations = Math.pow(2, depCount);
     
     for (let c = 0; c < maxCombinations; c++) {
-      const husbandDeps = [];
-      const wifeDeps = [];
+      const aDeps = [];
+      const bDeps = [];
       
-      let husbandCardSum = husband.card;
-      let husbandCashSum = husband.cash;
-      let husbandMedicalSum = 0;
-      let husbandEduSum = 0;
-      let husbandChildCount = 0;
+      let aCardSum = personA.card;
+      let aCashSum = personA.cash;
+      let aMedicalSum = 0;
+      let aEduSum = 0;
+      let aChildCount = 0;
 
-      let wifeCardSum = wife.card;
-      let wifeCashSum = wife.cash;
-      let wifeMedicalSum = 0;
-      let wifeEduSum = 0;
-      let wifeChildCount = 0;
+      let bCardSum = personB.card;
+      let bCashSum = personB.cash;
+      let bMedicalSum = 0;
+      let bEduSum = 0;
+      let bChildCount = 0;
 
-      let hSenior = false, hDisabled = false, hBirth = false, hBirthOrder = 1;
-      let wSenior = false, wDisabled = false, wBirth = false, wBirthOrder = 1;
+      let aSenior = false, aDisabled = false, aBirth = false, aBirthOrder = 1;
+      let bSenior = false, bDisabled = false, bBirth = false, bBirthOrder = 1;
 
       for (let i = 0; i < depCount; i++) {
         const dep = dependents[i];
-        const isWife = (c >> i) & 1;
+        const isB = (c >> i) & 1;
         
-        if (isWife) {
-          wifeDeps.push(dep);
-          wifeCardSum += dep.card;
-          wifeMedicalSum += dep.medical;
-          wifeEduSum += dep.edu;
-          if (dep.relation === 'child') wifeChildCount++;
-          if (dep.senior) wSenior = true;
-          if (dep.disabled) wDisabled = true;
-          if (dep.birth) { wBirth = true; wBirthOrder = dep.birthOrder; }
+        if (isB) {
+          bDeps.push(dep);
+          bCardSum += dep.card;
+          bMedicalSum += dep.medical;
+          bEduSum += dep.edu;
+          if (dep.relation === 'child') bChildCount++;
+          if (dep.senior) bSenior = true;
+          if (dep.disabled) bDisabled = true;
+          if (dep.birth) { bBirth = true; bBirthOrder = dep.birthOrder; }
         } else {
-          husbandDeps.push(dep);
-          husbandCardSum += dep.card;
-          husbandMedicalSum += dep.medical;
-          husbandEduSum += dep.edu;
-          if (dep.relation === 'child') husbandChildCount++;
-          if (dep.senior) hSenior = true;
-          if (dep.disabled) hDisabled = true;
-          if (dep.birth) { hBirth = true; hBirthOrder = dep.birthOrder; }
+          aDeps.push(dep);
+          aCardSum += dep.card;
+          aMedicalSum += dep.medical;
+          aEduSum += dep.edu;
+          if (dep.relation === 'child') aChildCount++;
+          if (dep.senior) aSenior = true;
+          if (dep.disabled) aDisabled = true;
+          if (dep.birth) { aBirth = true; aBirthOrder = dep.birthOrder; }
         }
       }
 
       // 의료비 몰아주기 예외 조합 시뮬레이션
       const medicalScenarios = [
-        { hMed: husbandMedicalSum + wifeMedicalSum, wMed: 0 },
-        { hMed: 0, wMed: husbandMedicalSum + wifeMedicalSum }
+        { aMed: aMedicalSum + bMedicalSum, bMed: 0 },
+        { aMed: 0, bMed: aMedicalSum + bMedicalSum }
       ];
 
       for (const med of medicalScenarios) {
-        const hResult = TaxCalculator.calculateYearEndTax({
-          totalSalary: husband.salary,
-          dependents: husbandDeps.length,
-          cardUsage: husbandCardSum,
-          cashUsage: husbandCashSum,
-          pensionSavings: husband.pension || 0,
-          irpSavings: husband.irp || 0,
-          medicalExpense: med.hMed,
-          educationExpense: husbandEduSum,
-          monthlyRent: husband.rent || 0,
-          childrenCount: husbandChildCount,
-          isSmeEmployee: husband.SME,
-          hasSeniorDependent: hSenior,
-          hasDisabledDependent: hDisabled,
-          hasBirthOrAdoption: hBirth,
-          birthOrder: hBirthOrder,
-          housingSubscription: husband.housingSubscription || 0,
-          housingLoanRepay: husband.housingLoanRepay || 0,
-          mortgageInterest: husband.mortgageInterest || 0,
-          ventureInvestment: husband.ventureInvestment || 0
+        const aResult = TaxCalculator.calculateYearEndTax({
+          totalSalary: personA.salary,
+          dependents: aDeps.length,
+          cardUsage: aCardSum,
+          cashUsage: aCashSum,
+          pensionSavings: personA.pension || 0,
+          irpSavings: personA.irp || 0,
+          medicalExpense: med.aMed,
+          educationExpense: aEduSum,
+          monthlyRent: personA.rent || 0,
+          childrenCount: aChildCount,
+          isSmeEmployee: personA.SME,
+          hasSeniorDependent: aSenior,
+          hasDisabledDependent: aDisabled,
+          hasBirthOrAdoption: aBirth,
+          birthOrder: aBirthOrder,
+          housingSubscription: personA.housingSubscription || 0,
+          housingLoanRepay: personA.housingLoanRepay || 0,
+          mortgageInterest: personA.mortgageInterest || 0,
+          ventureInvestment: personA.ventureInvestment || 0
         });
 
-        const wResult = TaxCalculator.calculateYearEndTax({
-          totalSalary: wife.salary,
-          dependents: wifeDeps.length,
-          cardUsage: wifeCardSum,
-          cashUsage: wifeCashSum,
-          pensionSavings: wife.pension || 0,
-          irpSavings: wife.irp || 0,
-          medicalExpense: med.wMed,
-          educationExpense: wifeEduSum,
-          monthlyRent: wife.rent || 0,
-          childrenCount: wifeChildCount,
-          isSmeEmployee: wife.SME,
-          hasSeniorDependent: wSenior,
-          hasDisabledDependent: wDisabled,
-          hasBirthOrAdoption: wBirth,
-          birthOrder: wBirthOrder,
-          housingSubscription: wife.housingSubscription || 0,
-          housingLoanRepay: wife.housingLoanRepay || 0,
-          mortgageInterest: wife.mortgageInterest || 0,
-          ventureInvestment: wife.ventureInvestment || 0
+        const bResult = TaxCalculator.calculateYearEndTax({
+          totalSalary: personB.salary,
+          dependents: bDeps.length,
+          cardUsage: bCardSum,
+          cashUsage: bCashSum,
+          pensionSavings: personB.pension || 0,
+          irpSavings: personB.irp || 0,
+          medicalExpense: med.bMed,
+          educationExpense: bEduSum,
+          monthlyRent: personB.rent || 0,
+          childrenCount: bChildCount,
+          isSmeEmployee: personB.SME,
+          hasSeniorDependent: bSenior,
+          hasDisabledDependent: bDisabled,
+          hasBirthOrAdoption: bBirth,
+          birthOrder: bBirthOrder,
+          housingSubscription: personB.housingSubscription || 0,
+          housingLoanRepay: personB.housingLoanRepay || 0,
+          mortgageInterest: personB.mortgageInterest || 0,
+          ventureInvestment: personB.ventureInvestment || 0
         });
 
-        const coupleTax = hResult.totalTax + wResult.totalTax;
+        const coupleTax = aResult.totalTax + bResult.totalTax;
 
         if (coupleTax < minCoupleTax) {
           minCoupleTax = coupleTax;
           bestAssignment = {
             combinationIndex: c,
-            medicalTarget: med.hMed > 0 ? 'husband' : 'wife',
-            husbandDeps: husbandDeps.map(d => d.name),
-            wifeDeps: wifeDeps.map(d => d.name),
-            husbandTax: hResult.totalTax,
-            wifeTax: wResult.totalTax,
+            medicalTarget: med.aMed > 0 ? 'a' : 'b',
+            aDeps: aDeps.map(d => d.name),
+            bDeps: bDeps.map(d => d.name),
+            aTax: aResult.totalTax,
+            bTax: bResult.totalTax,
             totalTax: coupleTax,
-            hResult: hResult,
-            wResult: wResult
+            aResult: aResult,
+            bResult: bResult
           };
         }
       }
     }
 
-    const allHusbandTax = this.getCoupleTaxWithTarget(husband, wife, dependents, 'husband');
-    const allWifeTax = this.getCoupleTaxWithTarget(husband, wife, dependents, 'wife');
+    const allATax = this.getCoupleTaxWithTarget(personA, personB, dependents, 'a');
+    const allBTax = this.getCoupleTaxWithTarget(personA, personB, dependents, 'b');
 
     return {
       best: bestAssignment,
       minCoupleTax,
-      allHusbandTax,
-      allWifeTax,
-      savings: Math.max(0, Math.min(allHusbandTax, allWifeTax) - minCoupleTax)
+      allATax,
+      allBTax,
+      savings: Math.max(0, Math.min(allATax, allBTax) - minCoupleTax)
     };
   },
 
-  getCoupleTaxWithTarget(husband, wife, dependents, target) {
-    const isWifeTarget = target === 'wife';
-    const husbandDeps = isWifeTarget ? [] : dependents;
-    const wifeDeps = isWifeTarget ? dependents : [];
+  getCoupleTaxWithTarget(personA, personB, dependents, target) {
+    const isBTarget = target === 'b';
+    const aDeps = isBTarget ? [] : dependents;
+    const bDeps = isBTarget ? dependents : [];
 
-    const hSenior = !isWifeTarget && dependents.some(d => d.senior);
-    const hDisabled = !isWifeTarget && dependents.some(d => d.disabled);
-    const wSenior = isWifeTarget && dependents.some(d => d.senior);
-    const wDisabled = isWifeTarget && dependents.some(d => d.disabled);
+    const aSenior = !isBTarget && dependents.some(d => d.senior);
+    const aDisabled = !isBTarget && dependents.some(d => d.disabled);
+    const bSenior = isBTarget && dependents.some(d => d.senior);
+    const bDisabled = isBTarget && dependents.some(d => d.disabled);
 
-    const hResult = TaxCalculator.calculateYearEndTax({
-      totalSalary: husband.salary,
-      dependents: husbandDeps.length,
-      cardUsage: husband.card + (isWifeTarget ? 0 : dependents.reduce((sum, d) => sum + d.card, 0)),
-      cashUsage: husband.cash,
-      pensionSavings: husband.pension || 0,
-      irpSavings: husband.irp || 0,
-      medicalExpense: isWifeTarget ? 0 : dependents.reduce((sum, d) => sum + d.medical, 0),
-      educationExpense: isWifeTarget ? 0 : dependents.reduce((sum, d) => sum + d.edu, 0),
-      childrenCount: isWifeTarget ? 0 : dependents.filter(d => d.relation === 'child').length,
-      isSmeEmployee: husband.SME,
-      hasSeniorDependent: hSenior,
-      hasDisabledDependent: hDisabled
+    const aResult = TaxCalculator.calculateYearEndTax({
+      totalSalary: personA.salary,
+      dependents: aDeps.length,
+      cardUsage: personA.card + (isBTarget ? 0 : dependents.reduce((sum, d) => sum + d.card, 0)),
+      cashUsage: personA.cash,
+      pensionSavings: personA.pension || 0,
+      irpSavings: personA.irp || 0,
+      medicalExpense: isBTarget ? 0 : dependents.reduce((sum, d) => sum + d.medical, 0),
+      educationExpense: isBTarget ? 0 : dependents.reduce((sum, d) => sum + d.edu, 0),
+      childrenCount: isBTarget ? 0 : dependents.filter(d => d.relation === 'child').length,
+      isSmeEmployee: personA.SME,
+      hasSeniorDependent: aSenior,
+      hasDisabledDependent: aDisabled
     });
 
-    const wResult = TaxCalculator.calculateYearEndTax({
-      totalSalary: wife.salary,
-      dependents: wifeDeps.length,
-      cardUsage: wife.card + (isWifeTarget ? dependents.reduce((sum, d) => sum + d.card, 0) : 0),
-      cashUsage: wife.cash,
-      pensionSavings: wife.pension || 0,
-      irpSavings: wife.irp || 0,
-      medicalExpense: isWifeTarget ? dependents.reduce((sum, d) => sum + d.medical, 0) : 0,
-      educationExpense: isWifeTarget ? dependents.reduce((sum, d) => sum + d.edu, 0) : 0,
-      childrenCount: isWifeTarget ? dependents.filter(d => d.relation === 'child').length : 0,
-      isSmeEmployee: wife.SME,
-      hasSeniorDependent: wSenior,
-      hasDisabledDependent: wDisabled
+    const bResult = TaxCalculator.calculateYearEndTax({
+      totalSalary: personB.salary,
+      dependents: bDeps.length,
+      cardUsage: personB.card + (isBTarget ? dependents.reduce((sum, d) => sum + d.card, 0) : 0),
+      cashUsage: personB.cash,
+      pensionSavings: personB.pension || 0,
+      irpSavings: personB.irp || 0,
+      medicalExpense: isBTarget ? dependents.reduce((sum, d) => sum + d.medical, 0) : 0,
+      educationExpense: isBTarget ? dependents.reduce((sum, d) => sum + d.edu, 0) : 0,
+      childrenCount: isBTarget ? dependents.filter(d => d.relation === 'child').length : 0,
+      isSmeEmployee: personB.SME,
+      hasSeniorDependent: bSenior,
+      hasDisabledDependent: bDisabled
     });
 
-    return hResult.totalTax + wResult.totalTax;
+    return aResult.totalTax + bResult.totalTax;
   },
 
   // 2. 해외주식/부동산 배우자 증여 후 매도 시뮬레이터

@@ -8,7 +8,9 @@ const ASSETS = [
   '/tax_calculator/advisor.js',
   '/tax_calculator/styles.css',
   '/tax_calculator/manifest.json',
-  '/tax_calculator/favicon.svg'
+  '/tax_calculator/favicon.svg',
+  '/tax_calculator/pdf.min.js',
+  '/tax_calculator/pdf.worker.min.js'
 ];
 
 self.addEventListener('install', (event) => {

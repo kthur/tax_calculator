@@ -50,6 +50,27 @@ const TaxCalculator = {
     };
   },
 
+  calculateSalaryDeduction(totalSalary) {
+    if (totalSalary <= 5000000) return Math.floor(totalSalary * 0.7);
+    if (totalSalary <= 15000000) return Math.floor(3500000 + (totalSalary - 5000000) * 0.4);
+    if (totalSalary <= 45000000) return Math.floor(7500000 + (totalSalary - 15000000) * 0.15);
+    if (totalSalary <= 100000000) return Math.floor(12000000 + (totalSalary - 45000000) * 0.05);
+    return Math.floor(14750000 + (totalSalary - 100000000) * 0.02);
+  },
+
+  applyProgressiveBrackets(value, brackets) {
+    if (value <= 0) return { tax: 0, rate: 0, deduction: 0 };
+    let target = brackets[brackets.length - 1];
+    for (const bracket of brackets) {
+      if (value <= bracket.limit) { target = bracket; break; }
+    }
+    return {
+      tax: Math.max(0, Math.floor(value * target.rate - (target.ded || 0))),
+      rate: target.rate,
+      deduction: target.ded || 0
+    };
+  },
+
   calculateYellowUmbrellaDeduction(businessIncome, payment) {
     if (payment <= 0) return 0;
     let limit = 2000000;
@@ -96,12 +117,8 @@ const TaxCalculator = {
     let calculatedExpense = expense;
     let salaryDeduction = 0;
     if (incomeType === 'wage') {
-      if (totalIncome <= 5000000) salaryDeduction = Math.floor(totalIncome * 0.7);
-      else if (totalIncome <= 15000000) salaryDeduction = Math.floor(3500000 + (totalIncome - 5000000) * 0.4);
-      else if (totalIncome <= 45000000) salaryDeduction = Math.floor(7500000 + (totalIncome - 15000000) * 0.15);
-      else if (totalIncome <= 100000000) salaryDeduction = Math.floor(12000000 + (totalIncome - 45000000) * 0.05);
-      else salaryDeduction = Math.floor(14750000 + (totalIncome - 100000000) * 0.02);
-      calculatedExpense = Math.floor(salaryDeduction);
+      salaryDeduction = this.calculateSalaryDeduction(totalIncome);
+      calculatedExpense = salaryDeduction;
     }
     
     let netIncome = Math.max(0, totalIncome - calculatedExpense);
@@ -363,14 +380,12 @@ const TaxCalculator = {
     studentLoanRepay = 0, 
     donationAmount = 0, 
     localDonation = 0, 
-    ventureInvestment = 0 
+    ventureInvestment = 0,
+    traditionalMarket = 0,
+    publicTransit = 0,
+    bookPerformance = 0
   }) {
-    let salaryDeduction = 0;
-    if (totalSalary <= 5000000) salaryDeduction = Math.floor(totalSalary * 0.7);
-    else if (totalSalary <= 15000000) salaryDeduction = Math.floor(3500000 + (totalSalary - 5000000) * 0.4);
-    else if (totalSalary <= 45000000) salaryDeduction = Math.floor(7500000 + (totalSalary - 15000000) * 0.15);
-    else if (totalSalary <= 100000000) salaryDeduction = Math.floor(12000000 + (totalSalary - 45000000) * 0.05);
-    else salaryDeduction = Math.floor(14750000 + (totalSalary - 100000000) * 0.02);
+    const salaryDeduction = this.calculateSalaryDeduction(totalSalary);
 
     const grossIncome = Math.max(0, totalSalary - salaryDeduction);
 
@@ -396,10 +411,6 @@ const TaxCalculator = {
     housingDeduction += Math.min(18000000, mortgageInterest);
 
     // 추가 소비 공제: 전통시장(30%), 대중교통(40%), 도서공연(30%) — 별도 한도
-    var traditionalMarket = opts.traditionalMarket || 0;
-    var publicTransit = opts.publicTransit || 0;
-    var bookPerformance = opts.bookPerformance || 0;
-
     const threshold = Math.floor(totalSalary * 0.25);
     const totalCardUsage = cardUsage + cashUsage;
     let cardDeduction = 0;
@@ -418,12 +429,12 @@ const TaxCalculator = {
     }
 
     // 추가 공제: 기본 한도와 별도로 추가 한도 적용
-    var addLimitTrad = 3000000;
-    var addLimitTransit = 3000000;
-    var addLimitBook = totalSalary <= 70000000 ? 3000000 : 0;
-    var tradDeduction = Math.min(Math.floor(traditionalMarket * 0.3), addLimitTrad);
-    var transitDeduction = Math.min(Math.floor(publicTransit * 0.4), addLimitTransit);
-    var bookDeduction = addLimitBook > 0 ? Math.min(Math.floor(bookPerformance * 0.3), addLimitBook) : 0;
+    const addLimitTrad = 3000000;
+    const addLimitTransit = 3000000;
+    const addLimitBook = totalSalary <= 70000000 ? 3000000 : 0;
+    const tradDeduction = Math.min(Math.floor(traditionalMarket * 0.3), addLimitTrad);
+    const transitDeduction = Math.min(Math.floor(publicTransit * 0.4), addLimitTransit);
+    const bookDeduction = addLimitBook > 0 ? Math.min(Math.floor(bookPerformance * 0.3), addLimitBook) : 0;
 
     const tempDeductions = personDeduction + cardDeduction + tradDeduction + transitDeduction + bookDeduction + housingDeduction;
     const currentIncome = Math.max(0, grossIncome - tempDeductions);
@@ -552,21 +563,15 @@ TaxCalculator.calculateGiftTax = function(opts) {
   }
   var cumulative = giftAmount + giftPast10Years;
   var taxableGift = Math.max(0, cumulative - exemption);
-  var brackets = [
+  var bracketResult = TaxCalculator.applyProgressiveBrackets(taxableGift, [
     { limit: 100000000,  rate: 0.10, ded: 0 },
     { limit: 500000000,  rate: 0.20, ded: 10000000 },
     { limit: 1000000000, rate: 0.30, ded: 60000000 },
     { limit: 3000000000, rate: 0.40, ded: 160000000 },
     { limit: Infinity,   rate: 0.50, ded: 460000000 }
-  ];
-  var bracket = brackets[brackets.length - 1];
-  for (var i = 0; i < brackets.length; i++) {
-    if (taxableGift <= brackets[i].limit) { bracket = brackets[i]; break; }
-  }
-  var tax = Math.floor(taxableGift * bracket.rate - bracket.ded);
-  if (tax < 0) tax = 0;
-  var localTax = Math.floor(tax * 0.1);
-  return { taxableGift: taxableGift, tax: tax, localTax: localTax, totalTax: tax + localTax, rate: bracket.rate * 100, exemption: exemption, cumulative: cumulative };
+  ]);
+  var localTax = Math.floor(bracketResult.tax * 0.1);
+  return { taxableGift: taxableGift, tax: bracketResult.tax, localTax: localTax, totalTax: bracketResult.tax + localTax, rate: bracketResult.rate * 100, exemption: exemption, cumulative: cumulative };
 };
 
 // ──────────────────────────────────────────────
@@ -638,19 +643,14 @@ TaxCalculator.calculateInheritanceTax = function(opts) {
   var taxableEstate = Math.max(0, grossEstate - totalDeductions);
 
   // 4. 상속세율 (개정: 최고 50% 구간 삭제 → 최고 40%)
-  var brackets = [
+  var bracketResult = TaxCalculator.applyProgressiveBrackets(taxableEstate, [
     { limit: 200000000,   rate: 0.10, ded: 0 },
     { limit: 500000000,   rate: 0.20, ded: 20000000 },
     { limit: 1000000000,  rate: 0.30, ded: 70000000 },
     { limit: 3000000000,  rate: 0.40, ded: 170000000 },
     { limit: Infinity,    rate: 0.40, ded: 170000000 }
-  ];
-  var bracket = brackets[brackets.length - 1];
-  for (var i = 0; i < brackets.length; i++) {
-    if (taxableEstate <= brackets[i].limit) { bracket = brackets[i]; break; }
-  }
-  var tax = Math.max(0, Math.floor(taxableEstate * bracket.rate - bracket.ded));
-  var localTax = Math.floor(tax * 0.1);
+  ]);
+  var localTax = Math.floor(bracketResult.tax * 0.1);
 
   return {
     grossEstate: grossEstate,
@@ -662,10 +662,10 @@ TaxCalculator.calculateInheritanceTax = function(opts) {
     financialDeduction: financialDeduction,
     totalDeductions: totalDeductions,
     taxableEstate: taxableEstate,
-    tax: tax,
+    tax: bracketResult.tax,
     localTax: localTax,
-    totalTax: tax + localTax,
-    rate: bracket.rate * 100,
+    totalTax: bracketResult.tax + localTax,
+    rate: bracketResult.rate * 100,
     exemptionLimit: personDeduction + spouseDeduction,
     isTaxFree: taxableEstate <= 0,
     spouseLegalShare: hasLivingSpouse ? Math.floor(totalAsset / (childCount + 1.5)) : 0
@@ -699,19 +699,14 @@ TaxCalculator.calculateMarriageBirthGiftTax = function(opts) {
   var taxableGift = Math.max(0, cumulative - totalExemption);
 
   // 증여세율표
-  var brackets = [
+  var bracketResult = TaxCalculator.applyProgressiveBrackets(taxableGift, [
     { limit: 100000000,  rate: 0.10, ded: 0 },
     { limit: 500000000,  rate: 0.20, ded: 10000000 },
     { limit: 1000000000, rate: 0.30, ded: 60000000 },
     { limit: 3000000000, rate: 0.40, ded: 160000000 },
     { limit: Infinity,   rate: 0.50, ded: 460000000 }
-  ];
-  var bracket = brackets[brackets.length - 1];
-  for (var i = 0; i < brackets.length; i++) {
-    if (taxableGift <= brackets[i].limit) { bracket = brackets[i]; break; }
-  }
-  var tax = Math.max(0, Math.floor(taxableGift * bracket.rate - bracket.ded));
-  var localTax = Math.floor(tax * 0.1);
+  ]);
+  var localTax = Math.floor(bracketResult.tax * 0.1);
 
   var isTaxFree = taxableGift <= 0;
   return {
@@ -721,10 +716,10 @@ TaxCalculator.calculateMarriageBirthGiftTax = function(opts) {
     totalExemption: totalExemption,
     cumulative: cumulative,
     taxableGift: taxableGift,
-    tax: tax,
+    tax: bracketResult.tax,
     localTax: localTax,
-    totalTax: tax + localTax,
-    rate: bracket.rate * 100,
+    totalTax: bracketResult.tax + localTax,
+    rate: bracketResult.rate * 100,
     isTaxFree: isTaxFree,
     maxTaxFreeAmount: totalExemption,
     양가활용가능: "양가(친정+시댁) 각각 1.5억씩 총 3억 원까지 증여세 없이 이전 가능"
@@ -736,35 +731,25 @@ TaxCalculator.calculatePropertyTax = function(opts) {
   var marketPrice = opts.marketPrice || publicPrice;
   var houseCount = opts.houseCount || 1;
   var isOneHouse = opts.isOneHouse !== undefined ? opts.isOneHouse : (houseCount === 1);
-  var propertyBrackets = [
+  var taxableProperty = Math.floor(publicPrice * 0.6);
+  var propertyResult = TaxCalculator.applyProgressiveBrackets(taxableProperty, [
     { limit: 60000000,   rate: 0.001, ded: 0 },
     { limit: 150000000,  rate: 0.0015, ded: 30000 },
     { limit: 300000000,  rate: 0.0025, ded: 180000 },
     { limit: Infinity,   rate: 0.004,  ded: 630000 }
-  ];
-  var taxableProperty = Math.floor(publicPrice * 0.6);
-  var pBracket = propertyBrackets[propertyBrackets.length - 1];
-  for (var pi = 0; pi < propertyBrackets.length; pi++) {
-    if (taxableProperty <= propertyBrackets[pi].limit) { pBracket = propertyBrackets[pi]; break; }
-  }
-  var propertyTax = Math.floor(taxableProperty * pBracket.rate - pBracket.ded);
-  if (propertyTax < 0) propertyTax = 0;
+  ]);
+  var propertyTax = propertyResult.tax;
   var compDeduction = isOneHouse ? 1200000000 : 900000000;
   var compTaxable = Math.max(0, publicPrice - compDeduction);
   var compFairRate = isOneHouse ? 0.6 : 1.0;
   compTaxable = Math.floor(compTaxable * compFairRate);
-  var compBrackets = [
+  var compResult = TaxCalculator.applyProgressiveBrackets(compTaxable, [
     { limit: 3000000000,  rate: 0.006, ded: 0 },
     { limit: 5000000000,  rate: 0.012, ded: 18000000 },
     { limit: 94000000000, rate: 0.018, ded: 48000000 },
     { limit: Infinity,    rate: 0.030, ded: 1176000000 }
-  ];
-  var cBracket = compBrackets[compBrackets.length - 1];
-  for (var ci = 0; ci < compBrackets.length; ci++) {
-    if (compTaxable <= compBrackets[ci].limit) { cBracket = compBrackets[ci]; break; }
-  }
-  var comprehensiveTax = Math.floor(compTaxable * cBracket.rate - cBracket.ded);
-  if (comprehensiveTax < 0) comprehensiveTax = 0;
+  ]);
+  var comprehensiveTax = compResult.tax;
   var specialTax = Math.floor(comprehensiveTax * 0.2);
   return { propertyTax: propertyTax, comprehensiveTax: comprehensiveTax, specialTax: specialTax, totalTax: propertyTax + comprehensiveTax + specialTax, taxableProperty: taxableProperty, compTaxable: compTaxable };
 };
@@ -1044,7 +1029,7 @@ TaxCalculator.calculateDeemedRent = function(opts) {
  * @param {number} opts.totalSalary     — 총급여 (연말정산 기준 grossIncome)
  * @param {number} opts.currentPension  — 현재까지 납입한 연금저축 금액
  * @param {number} opts.currentIrp      — 현재까지 납입한 IRP 금액
- * @param {number} opts.isHusband       — true이면 남편용 필드 ID 생성
+ * @param {number} opts.isPersonA       — true이면 배우자 A용 필드 ID 생성
  * @returns {Object}
  */
 TaxCalculator.calculatePensionOptimization = function(opts) {

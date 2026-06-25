@@ -7,8 +7,8 @@
  *   - 향후 React/Vue 마이그레이션 시 store만 교체하면 되도록 추상화
  *
  * 사용 예:
- *   TaxStore.set('inc-h-salary', 70000000);
- *   TaxStore.set('inc-w-salary', 45000000);
+ *   TaxStore.set('inc-a-salary', 70000000);
+ *   TaxStore.set('inc-b-salary', 45000000);
  *   const data = TaxStore.getData();  // 구조화된 전체 입력 객체
  */
 (function () {
@@ -49,8 +49,8 @@
       return parseInt(el.value.replace(/,/g, ''), 10) || 0;
     }
 
-    var hType = (document.getElementById('inc-h-type') || {}).value || 'wage';
-    var wType = (document.getElementById('inc-w-type') || {}).value || 'wage';
+    var typeA = (document.getElementById('inc-a-type') || {}).value || 'wage';
+    var typeB = (document.getElementById('inc-b-type') || {}).value || 'wage';
 
     // 부양가족 수집
     var container = document.getElementById('inc-couple-ye-people');
@@ -73,34 +73,35 @@
     }
 
     return {
-      husband: {
-        salary: parse('inc-h-salary'),
-        type: hType,
-        card: parse('inc-h-card'),
-        yellow: parse('inc-h-yellow'),
-        pension: parse('inc-h-pension'),
-        financialGen: parse('inc-h-financial-gen'),
-        financialOverseas: parse('inc-h-financial-overseas'),
-        isaIncome: parse('inc-h-isa'),
-        isaType: (document.getElementById('inc-h-isa-type') || {}).value || 'general',
-        bondSeparated: parse('inc-h-bond')
+      spouseA: {
+        salary: parse('inc-a-salary'),
+        type: typeA,
+        card: parse('inc-a-card'),
+        yellow: parse('inc-a-yellow'),
+        pension: parse('inc-a-pension'),
+        financialGen: parse('inc-a-financial-gen'),
+        financialOverseas: parse('inc-a-financial-overseas'),
+        isaIncome: parse('inc-a-isa'),
+        isaType: (document.getElementById('inc-a-isa-type') || {}).value || 'general',
+        bondSeparated: parse('inc-a-bond'),
+        venture: parse('inc-a-venture'),
+        housingSubscription: parse('inc-a-housing-sub'),
+        housingLoanRepay: parse('inc-a-housing-loan')
       },
-      wife: {
-        salary: parse('inc-w-salary'),
-        type: wType,
-        card: parse('inc-w-card'),
-        yellow: parse('inc-w-yellow'),
-        pension: parse('inc-w-pension'),
-        financialGen: parse('inc-w-financial-gen'),
-        financialOverseas: parse('inc-w-financial-overseas'),
-        isaIncome: parse('inc-w-isa'),
-        isaType: (document.getElementById('inc-w-isa-type') || {}).value || 'general',
-        bondSeparated: parse('inc-w-bond')
-      },
-      common: {
-        venture: parse('inc-venture'),
-        housingSubscription: parse('inc-housing-sub'),
-        housingLoanRepay: parse('inc-housing-loan')
+      spouseB: {
+        salary: parse('inc-b-salary'),
+        type: typeB,
+        card: parse('inc-b-card'),
+        yellow: parse('inc-b-yellow'),
+        pension: parse('inc-b-pension'),
+        financialGen: parse('inc-b-financial-gen'),
+        financialOverseas: parse('inc-b-financial-overseas'),
+        isaIncome: parse('inc-b-isa'),
+        isaType: (document.getElementById('inc-b-isa-type') || {}).value || 'general',
+        bondSeparated: parse('inc-b-bond'),
+        venture: parse('inc-b-venture'),
+        housingSubscription: parse('inc-b-housing-sub'),
+        housingLoanRepay: parse('inc-b-housing-loan')
       },
       dependents: dependents,
       vat: {
