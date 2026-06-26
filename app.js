@@ -106,6 +106,49 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function initStepSections() {
+    document.querySelectorAll('.step-section-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const targetId = header.dataset.target;
+        const body = document.getElementById(targetId);
+        if (!body) return;
+        body.classList.toggle('collapsed');
+        const arrow = header.querySelector('span:last-child');
+        if (arrow) arrow.textContent = body.classList.contains('collapsed') ? '▼' : '▲';
+      });
+    });
+  }
+
+  function updateInputProgress() {
+    const fields = [
+      'inc-a-salary', 'inc-b-salary', 'inc-a-card', 'inc-b-card',
+      'inc-a-pension', 'inc-b-pension', 'inc-a-financial-gen', 'inc-b-financial-gen',
+      'inc-a-isa', 'inc-b-isa', 'inc-a-bond', 'inc-b-bond',
+      'inc-a-venture', 'inc-b-venture', 'inc-a-housing-sub', 'inc-b-housing-sub'
+    ];
+    let filled = 0;
+    fields.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        const val = parseInt(el.value.replace(/,/g, ''), 10) || 0;
+        if (val > 0) filled++;
+      }
+    });
+    const pct = Math.round((filled / fields.length) * 100);
+    const fill = document.getElementById('progress-fill');
+    const label = document.getElementById('progress-label');
+    const pctLabel = document.getElementById('progress-pct');
+    if (fill) fill.style.width = pct + '%';
+    if (pctLabel) pctLabel.textContent = pct + '%';
+    if (label) {
+      if (pct === 0) label.textContent = '입력해 주세요';
+      else if (pct < 30) label.textContent = '기본 정보 입력 중';
+      else if (pct < 60) label.textContent = '공제 항목 입력 중';
+      else if (pct < 100) label.textContent = '추가 입력 가능';
+      else label.textContent = '✅ 모든 항목 입력 완료!';
+    }
+  }
+
   function showCalcStatus(show) {
     const el = document.getElementById('calc-status-income');
     if (!el) return;
@@ -116,6 +159,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById('res-report-empty');
     if (!el) return;
     el.style.display = hasData ? 'none' : 'block';
+    const resultCard = document.getElementById('inc-result-card');
+    if (resultCard) {
+      resultCard.classList.toggle('has-empty-state', !hasData);
+    }
   }
 
   // Flag to prevent save-during-load loop
@@ -1095,6 +1142,8 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCardNavigation(d);
     renderMedicalComparison(d, dependents);
     renderFamilySummary(d, aResult, bResult, best, optResult, dependents);
+    showAccordionSection("acc-individual");
+    showAccordionSection("acc-advice");
 
     showCalcStatus(false);
   });
@@ -1576,8 +1625,129 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) { el.addEventListener('input', debouncedGiftSell); el.addEventListener('change', debouncedGiftSell); }
   });
 
+  // 🏠 간주임대료 실시간
+  const debouncedDeemedRent = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-deemed-rent').click(); });
+  ['deemed-house-count','deemed-deposit','deemed-highprice','deemed-small'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedDeemedRent); el.addEventListener('change', debouncedDeemedRent); }
+  });
+
+  // 🏥 건강보험료 실시간
+  const debouncedHealthIns = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-health-insurance').click(); });
+  ['hi-type','hi-earned-income','hi-other-income','hi-regional-income','hi-regional-property','hi-dependent-check'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedHealthIns); el.addEventListener('change', debouncedHealthIns); }
+  });
+
+  // 🏠 부동산 보유세 실시간
+  const debouncedPropertyTax = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-property-tax').click(); });
+  ['prop-public-price','prop-market-price','prop-house-count','prop-one-house'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedPropertyTax); el.addEventListener('change', debouncedPropertyTax); }
+  });
+
+  // 🏟️ 체육시설 공제 실시간
+  const debouncedSports = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-sports').click(); });
+  ['sports-salary','sports-fee','sports-has-pt'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedSports); el.addEventListener('change', debouncedSports); }
+  });
+
+  // 🎁 고향사랑기부제 실시간
+  const debouncedHometown = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-hometown').click(); });
+  ['hometown-amount','hometown-disaster'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedHometown); el.addEventListener('change', debouncedHometown); }
+  });
+
+  // 💰 ISA 최적화 실시간
+  const debouncedISA = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-isa-opt').click(); });
+  ['isa-annual','isa-type-select','isa-salary','isa-financial-comp-tax','isa-matured','isa-pension-transfer'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedISA); el.addEventListener('change', debouncedISA); }
+  });
+
+  // 🧮 경비율 비교 실시간
+  const debouncedExpense = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-expense-ratio').click(); });
+  ['expense-biz-code','expense-revenue','expense-declared-type'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedExpense); el.addEventListener('change', debouncedExpense); }
+  });
+
+  // 💰 연금저축 최적화 실시간
+  const debouncedPension = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-pension-opt').click(); });
+  ['pension-target','pension-salary','pension-amount','pension-irp-amount'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedPension); el.addEventListener('change', debouncedPension); }
+  });
+
+  // 💳 카드 황금비율 실시간
+  const debouncedCardRatio = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-card-ratio').click(); });
+  ['card-target','card-salary','card-usage-amount','card-cash-amount','card-traditional','card-transit','card-book'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedCardRatio); el.addEventListener('change', debouncedCardRatio); }
+  });
+
+  // 💍 혼인·출산 증여 실시간
+  const debouncedMarriageGift = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-marriage-gift').click(); });
+  ['mg-reason','mg-amount','mg-past'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedMarriageGift); el.addEventListener('change', debouncedMarriageGift); }
+  });
+
+  // 🏛️ 상속세 실시간
+  const debouncedInherit = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-inheritance').click(); });
+  ['inherit-total-asset','inherit-child-count','inherit-has-spouse','inherit-spouse-share','inherit-coresident','inherit-coresident-value','inherit-financial','inherit-gift-past'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedInherit); el.addEventListener('change', debouncedInherit); }
+  });
+
+  // 🎁 증여세 실시간
+  const debouncedGiftTax = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-gift-tax').click(); });
+  ['gift-recipient','gift-amount','gift-past','gift-asset-type'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedGiftTax); el.addEventListener('change', debouncedGiftTax); }
+  });
+
+  // 📅 증여 타임라인 실시간
+  const debouncedGiftTimeline = debounce(() => { if (!isLoadingState) document.getElementById('btn-calc-gift-timeline').click(); });
+  ['gift-child-name','gift-child-age'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', debouncedGiftTimeline); el.addEventListener('change', debouncedGiftTimeline); }
+  });
+
   // 아코디언 초기화
   initAccordion();
+
+  // 단계형 섹션 초기화
+  initStepSections();
+  updateInputProgress();
+
+  // 접근성: 툴팁에 role/tabindex 부여 및 aria-describedby 연결
+  document.querySelectorAll('.tooltip-icon').forEach((tip, idx) => {
+    tip.setAttribute('role', 'tooltip');
+    tip.setAttribute('tabindex', '0');
+    const uniqueId = 'tip-' + idx;
+    tip.id = tip.id || uniqueId;
+    const parentLabel = tip.closest('label');
+    if (parentLabel) {
+      const input = parentLabel.querySelector('input, select');
+      if (input) input.setAttribute('aria-describedby', tip.id);
+    }
+  });
+
+  // 진행률 업데이트를 인컴 입력 변경에 연결
+  const progressInputs = [
+    'inc-a-salary','inc-b-salary','inc-a-card','inc-b-card',
+    'inc-a-yellow','inc-b-yellow','inc-a-pension','inc-b-pension','inc-a-irp','inc-b-irp',
+    'inc-a-financial-gen','inc-b-financial-gen','inc-a-financial-overseas','inc-b-financial-overseas',
+    'inc-a-isa','inc-b-isa','inc-a-bond','inc-b-bond',
+    'inc-a-venture','inc-b-venture','inc-a-housing-sub','inc-b-housing-sub','inc-a-housing-loan','inc-b-housing-loan'
+  ];
+  progressInputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', updateInputProgress); el.addEventListener('change', updateInputProgress); }
+  });
 
   // 초기 실행 - use setTimeout to ensure DOM is fully settled after localStorage restore
   setTimeout(() => {

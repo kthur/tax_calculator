@@ -587,6 +587,32 @@ body.light-mode .person-card {
   border-color: var(--accent-primary);
 }
 
+/* 🆕 단계형 섹션 (Step Section) 스타일 */
+.step-section-header {
+  transition: background 0.2s;
+  padding: 8px 4px;
+  border-radius: 6px;
+}
+.step-section-header:hover {
+  background: rgba(255,255,255,0.04);
+}
+.step-section-body {
+  overflow: hidden;
+  transition: max-height 0.35s ease, opacity 0.25s ease;
+  max-height: 5000px;
+  opacity: 1;
+}
+.step-section-body.collapsed {
+  max-height: 0;
+  opacity: 0.4;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
+body.light-mode .step-section-header:hover {
+  background: rgba(0,0,0,0.03);
+}
+
 /* 🆕 툴팁(Tooltip) 관련 스타일 */
 .tooltip-icon {
   display: inline-flex;
@@ -601,6 +627,7 @@ body.light-mode .person-card {
   cursor: help;
   position: relative;
   vertical-align: middle;
+  outline: none;
 }
 body.light-mode .tooltip-icon {
   background: rgba(0, 0, 0, 0.1);
@@ -627,7 +654,8 @@ body.light-mode .tooltip-icon {
   z-index: 100;
 }
 
-.tooltip-icon:hover::before {
+.tooltip-icon:hover::before,
+.tooltip-icon:focus::before {
   opacity: 1;
 }
 
@@ -928,23 +956,35 @@ body.light-mode .pdf-dropzone {
   }
 
   /* ============================================================
-     📱 모바일 레이아웃: 결과 카드를 입력 카드 위로 끌어올리기
+     📱 모바일: 결과 카드는 입력 후에 표시 (자연스러운 흐름)
      ============================================================ */
   #tab-income.calculator-panel.active {
     display: flex;
     flex-direction: column;
   }
-  /* 결과 카드: 최상단 (order 1) */
-  #tab-income.calculator-panel.active > #inc-result-card {
+  /* 입력 카드 먼저 (order 1) */
+  #tab-income.calculator-panel.active > .input-card:first-child {
     order: 1;
   }
-  /* 입력 카드: 그 아래 (order 2) */
-  #tab-income.calculator-panel.active > .input-card:first-child {
+  /* 결과 카드: 그 다음 (order 2) */
+  #tab-income.calculator-panel.active > #inc-result-card {
     order: 2;
   }
-  /* VAT 카드: 맨 아래 (order 3) */
+  /* 서브 입력 카드(연금/카드): 맨 아래 (order 3) */
   #tab-income.calculator-panel.active > .input-card:not(:first-child) {
     order: 3;
+  }
+  /* 빈 상태일 때 모바일 결과 카드에 안내 배지 표시 */
+  #inc-result-card.has-empty-state::before {
+    content: "💡 입력 후 결과가 자동으로 업데이트됩니다";
+    display: block;
+    text-align: center;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: rgba(108,99,255,0.12);
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
   }
 
   /* 캐러셀 네비게이션 버튼 터치 영역 확대 */
