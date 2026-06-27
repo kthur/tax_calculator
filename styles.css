@@ -218,6 +218,25 @@ body.light-mode .tab-btn:hover:not(.active) {
   color: var(--text-primary-light);
 }
 
+/* 🆕 Segmented Control (세그먼트 탭) 스타일 */
+.segment-btn {
+  color: var(--text-secondary-dark);
+}
+body.light-mode .segment-btn {
+  color: var(--text-secondary-light);
+}
+.segment-btn.active {
+  background: var(--accent-primary) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(108, 99, 255, 0.3);
+}
+.segment-btn:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.05) !important;
+}
+body.light-mode .segment-btn:hover:not(.active) {
+  background: rgba(0, 0, 0, 0.03) !important;
+}
+
 /* 5. 메인 그리드 및 패널 */
 .calculator-panel {
   display: none;
@@ -252,6 +271,15 @@ body.light-mode .result-card {
   background: var(--card-bg-light);
   border: 1px solid var(--card-border-light);
   box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+}
+
+@media (min-width: 1025px) {
+  .result-card {
+    position: sticky;
+    top: 1.5rem;
+    max-height: calc(100vh - 3rem);
+    overflow-y: auto;
+  }
 }
 
 .card-title {
@@ -1088,5 +1116,360 @@ body.light-mode .pdf-dropzone {
   /* Won helper label */
   .won-helper {
     font-size: 0.72rem !important;
+  }
+}
+
+/* ==========================================
+   🆕 P0: 플로팅 결과 요약 바 (모바일)
+   ========================================== */
+.floating-result-bar {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255,255,255,0.08);
+  padding: 10px 16px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  animation: slideUp 0.3s ease-out;
+}
+body.light-mode .floating-result-bar {
+  background: rgba(248, 250, 252, 0.95);
+  border-top-color: rgba(0,0,0,0.08);
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.floating-bar-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.floating-bar-label {
+  font-size: 0.65rem;
+  opacity: 0.6;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.floating-bar-amount {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--accent-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.floating-bar-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 18px;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.2s, box-shadow 0.2s;
+  flex-shrink: 0;
+}
+.floating-bar-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(0,212,170,0.3);
+}
+@media (max-width: 768px) {
+  .floating-result-bar.active {
+    display: flex;
+  }
+  body.floating-bar-visible {
+    padding-bottom: 70px;
+  }
+}
+
+/* ==========================================
+   🆕 P0: PDF 하이라이트 애니메이션
+   ========================================== */
+@keyframes pdfHighlightPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 212, 170, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(0, 212, 170, 0.6); }
+}
+.pdf-filled-field {
+  animation: pdfHighlightPulse 1s ease-in-out 3 !important;
+  border-color: var(--accent-secondary) !important;
+  background: rgba(0, 212, 170, 0.08) !important;
+}
+.pdf-filled-field::after {
+  content: '✓';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--accent-secondary);
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+.form-group { position: relative; }
+
+/* ==========================================
+   🆕 P1: 단계형 위자드 스텝퍼 UI
+   ========================================== */
+.stepper-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 1.25rem;
+  padding: 10px 0;
+}
+.stepper-step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  opacity: 0.4;
+  transition: opacity 0.3s;
+  user-select: none;
+}
+.stepper-step.active {
+  opacity: 1;
+}
+.stepper-step.done {
+  opacity: 0.8;
+}
+.stepper-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(255,255,255,0.12);
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+body.light-mode .stepper-dot {
+  background: rgba(0,0,0,0.05);
+  border-color: rgba(0,0,0,0.1);
+}
+.stepper-step.active .stepper-dot {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 12px rgba(108,99,255,0.4);
+}
+.stepper-step.done .stepper-dot {
+  background: var(--accent-secondary);
+  border-color: var(--accent-secondary);
+  color: #0f172a;
+}
+.stepper-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.stepper-connector {
+  width: 24px;
+  height: 2px;
+  background: rgba(255,255,255,0.08);
+  margin: 0 6px;
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+body.light-mode .stepper-connector {
+  background: rgba(0,0,0,0.08);
+}
+.stepper-connector.done {
+  background: var(--accent-secondary);
+}
+.stepper-nav-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 1.25rem;
+}
+.stepper-nav-btn {
+  padding: 10px 20px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: inherit;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex: 1;
+  text-align: center;
+}
+body.light-mode .stepper-nav-btn {
+  border-color: rgba(0,0,0,0.1);
+  background: rgba(0,0,0,0.02);
+}
+.stepper-nav-btn:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-1px);
+}
+.stepper-nav-btn.primary {
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  border-color: transparent;
+  color: #fff;
+}
+.stepper-nav-btn.primary:hover {
+  box-shadow: 0 4px 15px rgba(0,212,170,0.25);
+}
+.stepper-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
+}
+.step-section-body.stepper-hidden {
+  display: none;
+}
+
+/* ==========================================
+   🆕 P1: AI 추천 카드 태그 + 스마트 피드
+   ========================================== */
+.advice-smart-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 0.5rem;
+}
+.advice-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+.advice-tag.urgent {
+  background: rgba(255,107,107,0.2);
+  color: var(--accent-warning);
+  border: 1px solid rgba(255,107,107,0.2);
+}
+.advice-tag.high-value {
+  background: rgba(255,217,61,0.15);
+  color: var(--accent-gold);
+  border: 1px solid rgba(255,217,61,0.15);
+}
+.advice-tag.easy {
+  background: rgba(0,212,170,0.15);
+  color: var(--accent-secondary);
+  border: 1px solid rgba(0,212,170,0.15);
+}
+.advice-total-savings-badge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: linear-gradient(90deg, rgba(108,99,255,0.1), rgba(0,212,170,0.1));
+  border: 1px solid rgba(0,212,170,0.2);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  font-size: 0.82rem;
+}
+.advice-total-savings-badge .savings-label {
+  font-weight: 600;
+  opacity: 0.8;
+}
+.advice-total-savings-badge .savings-amount {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--accent-secondary);
+}
+
+/* ==========================================
+   🆕 P2: 단위 토글 (원/만원/억원)
+   ========================================== */
+.unit-toggle-group {
+  display: flex;
+  gap: 2px;
+  margin-top: 4px;
+}
+.unit-toggle-btn {
+  padding: 3px 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.03);
+  color: inherit;
+  border-radius: 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  opacity: 0.5;
+}
+body.light-mode .unit-toggle-btn {
+  border-color: rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.02);
+}
+.unit-toggle-btn.active {
+  opacity: 1;
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #fff;
+}
+.unit-toggle-btn:hover:not(.active) {
+  opacity: 0.8;
+}
+
+/* 한글 읽기 보조 */
+.korean-reading {
+  font-size: 0.68rem;
+  color: var(--accent-secondary);
+  font-weight: 600;
+  margin-top: 2px;
+  min-height: 1.2em;
+  transition: opacity 0.2s;
+  opacity: 0;
+}
+.korean-reading.visible {
+  opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+  .stepper-container {
+    gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px 0;
+  }
+  .stepper-label {
+    font-size: 0.65rem;
+  }
+  .stepper-dot {
+    width: 24px;
+    height: 24px;
+    font-size: 0.65rem;
+  }
+  .stepper-connector {
+    width: 16px;
+  }
+  .floating-bar-btn {
+    padding: 10px 14px;
+    font-size: 0.78rem;
+  }
+}
+@media (max-width: 480px) {
+  .unit-toggle-btn {
+    padding: 2px 7px;
+    font-size: 0.62rem;
   }
 }

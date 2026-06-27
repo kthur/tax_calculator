@@ -17,7 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const parseVal = (idOrEl) => {
     const el = typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
     if (!el) return 0;
-    return parseInt(el.value.replace(/,/g, ''), 10) || 0;
+    var raw = parseInt(el.value.replace(/,/g, ''), 10) || 0;
+    var unit = el.dataset.unit || 'won';
+    return raw * (unit === 'man' ? 10000 : unit === 'eok' ? 100000000 : 1);
   };
 
   const formatNumberWithCommas = (value) => {
@@ -106,6 +108,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  let stepperCurrentStep = 1;
+  const STEP_BODIES = ['spouse-a-body', 'spouse-b-body', 'dependents-body'];
+
   function initStepSections() {
     document.querySelectorAll('.step-section-header').forEach(header => {
       header.addEventListener('click', () => {
@@ -117,6 +122,96 @@ document.addEventListener('DOMContentLoaded', () => {
         if (arrow) arrow.textContent = body.classList.contains('collapsed') ? '▼' : '▲';
       });
     });
+
+    // PDF 토글 버튼 핸들러
+    const pdfToggleBtn = document.getElementById('pdf-toggle-btn');
+    const pdfDropzone = document.getElementById('pdf-dropzone');
+    const pdfToggleArrow = document.getElementById('pdf-toggle-arrow');
+    if (pdfToggleBtn && pdfDropzone && pdfToggleArrow) {
+      pdfToggleBtn.addEventListener('click', () => {
+        const isHidden = pdfDropzone.style.display === 'none';
+        if (isHidden) {
+          pdfDropzone.style.display = 'block';
+          pdfDropzone.classList.remove('collapsed');
+          pdfToggleArrow.textContent = '▲';
+        } else {
+          pdfDropzone.style.display = 'none';
+          pdfDropzone.classList.add('collapsed');
+          pdfToggleArrow.textContent = '▼';
+        }
+      });
+    }
+
+    // Stepper navigation (P1)
+    initStepper();
+  }
+
+  function initStepper() {
+    const steps = document.querySelectorAll('.stepper-step');
+    const connectors = document.querySelectorAll('.stepper-connector');
+    const prevBtn = document.getElementById('stepper-prev');
+    const nextBtn = document.getElementById('stepper-next');
+
+    // Click on stepper dot to navigate
+    steps.forEach(step => {
+      step.addEventListener('click', () => {
+        const targetStep = parseInt(step.dataset.step);
+        goToStep(targetStep);
+      });
+    });
+
+    if (prevBtn) prevBtn.addEventListener('click', () => goToStep(stepperCurrentStep - 1));
+    if (nextBtn) nextBtn.addEventListener('click', () => goToStep(stepperCurrentStep + 1));
+  }
+
+  function goToStep(targetStep) {
+    if (targetStep < 1 || targetStep > 3) return;
+    stepperCurrentStep = targetStep;
+
+    // Show/hide bodies
+    STEP_BODIES.forEach((id, idx) => {
+      const body = document.getElementById(id);
+      if (!body) return;
+      const stepNum = idx + 1;
+      if (stepNum === targetStep) {
+        body.classList.remove('stepper-hidden');
+        body.style.display = 'block';
+        body.classList.remove('collapsed');
+      } else {
+        body.classList.add('stepper-hidden');
+        body.style.display = 'none';
+      }
+    });
+
+    // Update stepper dots
+    const steps = document.querySelectorAll('.stepper-step');
+    const connectors = document.querySelectorAll('.stepper-connector');
+    steps.forEach((step, idx) => {
+      const stepNum = idx + 1;
+      step.classList.toggle('active', stepNum === targetStep);
+      step.classList.toggle('done', stepNum < targetStep);
+    });
+    connectors.forEach((conn, idx) => {
+      const connNum = idx + 1;
+      conn.classList.toggle('done', connNum < targetStep);
+    });
+
+    // Update nav buttons
+    const prevBtn = document.getElementById('stepper-prev');
+    const nextBtn = document.getElementById('stepper-next');
+    if (prevBtn) prevBtn.disabled = targetStep === 1;
+    if (nextBtn) {
+      if (targetStep === 3) {
+        nextBtn.textContent = '✅ 계산하기';
+        nextBtn.onclick = () => {
+          const btn = document.getElementById('btn-calc-income-integrated');
+          if (btn) btn.click();
+        };
+      } else {
+        nextBtn.textContent = '다음 ▶';
+        nextBtn.onclick = () => goToStep(targetStep + 1);
+      }
+    }
   }
 
   function updateInputProgress() {
@@ -174,6 +269,27 @@ document.addEventListener('DOMContentLoaded', () => {
       statics: {},
       dependents: []
     };
+
+    // 🆕 P2: 저장 전 money-input 단위를 원으로 자동 변환
+    document.querySelectorAll('.money-input[data-unit]').forEach(function(el) {
+      var u = el.dataset.unit;
+      if (u && u !== 'won') {
+        var raw = parseInt(el.value.replace(/,/g, ''), 10) || 0;
+        var wonVal = raw * (u === 'man' ? 10000 : 100000000);
+        el.value = formatNumberWithCommas(wonVal);
+        el.dataset.unit = 'won';
+        // 토글 버튼도 리셋
+        var group = el.parentNode.querySelector('.unit-toggle-group');
+        if (group) {
+          group.querySelectorAll('.unit-toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+          var firstBtn = group.querySelector('.unit-toggle-btn');
+          if (firstBtn) firstBtn.classList.add('active');
+        }
+        // won-helper 업데이트
+        var helper = el.parentNode.querySelector('.won-helper');
+        if (helper) helper.textContent = convertToKoreanWon(el.value);
+      }
+    });
 
     // Save all static inputs and select elements that have an ID
     const staticElements = document.querySelectorAll('input[id], select[id]');
@@ -344,6 +460,9 @@ document.addEventListener('DOMContentLoaded', () => {
     return result.trim() + ' 원';
   }
 
+  // 🆕 P2: 단위 변환 맵
+  var unitFactors = { won: 1, man: 10000, eok: 100000000 };
+
   function setupKoreanUnitHelpers() {
     const targetIds = [
       'inc-a-salary', 'inc-b-salary', 'inc-a-card', 'inc-b-card',
@@ -365,7 +484,8 @@ document.addEventListener('DOMContentLoaded', () => {
     targetIds.forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
-      
+
+      // 원래 won-helper (한글 읽기)
       const helper = document.createElement('div');
       helper.className = 'won-helper';
       helper.style.fontSize = '0.8rem';
@@ -377,9 +497,66 @@ document.addEventListener('DOMContentLoaded', () => {
       const updateHelper = () => {
         helper.textContent = convertToKoreanWon(el.value);
       };
-      
       el.addEventListener('input', updateHelper);
       updateHelper();
+
+      // 🆕 P2: 단위 토글 버튼
+      var unitGroup = document.createElement('div');
+      unitGroup.className = 'unit-toggle-group';
+      var units = ['won', 'man', 'eok'];
+      var unitLabels = { won: '원', man: '만원', eok: '억원' };
+      var currentUnit = 'won';
+      el.dataset.unit = 'won';
+
+      units.forEach(function(u) {
+        var btn = document.createElement('button');
+        btn.className = 'unit-toggle-btn' + (u === 'won' ? ' active' : '');
+        btn.textContent = unitLabels[u];
+        btn.addEventListener('click', function() {
+          if (currentUnit === u) return;
+          // Convert displayed value between units
+          var rawVal = parseInt(el.value.replace(/,/g, ''), 10) || 0;
+          var wonVal = rawVal * unitFactors[currentUnit];
+          var newVal = wonVal / unitFactors[u];
+          el.value = formatNumberWithCommas(Math.floor(newVal));
+          currentUnit = u;
+          el.dataset.unit = u;
+          unitGroup.querySelectorAll('.unit-toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          updateHelper();
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+        unitGroup.appendChild(btn);
+      });
+
+      el.parentNode.insertBefore(unitGroup, helper.nextSibling);
+
+      // 🆕 P2: 포커스 시 한글 읽기 툴팁
+      var koreanReading = document.createElement('div');
+      koreanReading.className = 'korean-reading';
+      el.parentNode.insertBefore(koreanReading, unitGroup.nextSibling);
+      
+      el.addEventListener('focus', function() {
+        var rawVal = parseInt(el.value.replace(/,/g, ''), 10) || 0;
+        var wonVal = rawVal * unitFactors[currentUnit];
+        koreanReading.textContent = '읽기: ' + convertToKoreanWon(wonVal);
+        koreanReading.classList.add('visible');
+      });
+      el.addEventListener('blur', function() {
+        koreanReading.classList.remove('visible');
+        // 포커스 해제 시 원 단위로 자동 변환 (localStorage 일관성 유지)
+        if (currentUnit !== 'won') {
+          var rawVal = parseInt(el.value.replace(/,/g, ''), 10) || 0;
+          var wonVal = rawVal * unitFactors[currentUnit];
+          el.value = formatNumberWithCommas(wonVal);
+          currentUnit = 'won';
+          el.dataset.unit = 'won';
+          unitGroup.querySelectorAll('.unit-toggle-btn').forEach(function(b) { b.classList.remove('active'); });
+          unitGroup.querySelector('.unit-toggle-btn:first-child').classList.add('active');
+          updateHelper();
+          el.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+      });
     });
   }
 
@@ -466,15 +643,23 @@ document.addEventListener('DOMContentLoaded', () => {
       { key: 'donation',      regex: /기부금\s*[:\s]*(?:￦|원)?\s*\[?\s*([\d,]+)\s*\]?/, id: null },
     ];
     const result = {};
+    const filledFields = [];
     for (const { key, regex, id } of patterns) {
       const match = clean.match(regex);
       const val = match ? parseInt(match[1].replace(/,/g, ''), 10) : 0;
       result[key] = val;
       if (id && val > 0) {
         const el = document.getElementById(id);
-        if (el) { el.value = String(val); el.style.background = 'rgba(0,212,170,0.15)'; }
+        if (el) {
+          el.value = String(val);
+          el.classList.add('pdf-filled-field');
+          filledFields.push({ id, label: key, value: val });
+          // 하이라이트 3초 후 제거
+          setTimeout(() => el.classList.remove('pdf-filled-field'), 3000);
+        }
       }
     }
+    result._filledFields = filledFields;
     return result;
   }
 
@@ -521,8 +706,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.money-input').forEach(el => {
           if (el.value) el.value = formatNumberWithCommas(el.value);
         });
-        pdfStatus.innerHTML = `✅ PDF 분석 완료! <strong>${filledCount}개 항목</strong>이 자동 입력되었습니다. (총급여 ${parsedData.totalSalary.toLocaleString()}원, 카드 ${parsedData.creditCard.toLocaleString()}원 등)`;
+        pdfStatus.innerHTML = `✅ PDF 분석 완료! <strong>${filledCount}개 항목</strong>이 자동 입력되었습니다.`;
         pdfStatus.style.color = 'var(--accent-secondary)';
+        // 🆕 P0: PDF 리뷰 모달 표시
+        showPDFReviewModal(parsedData._filledFields || [], filledCount);
       } else {
         const preview = extractedText.replace(/\s+/g, ' ').substring(0, 200);
         pdfStatus.innerHTML = `⚠️ 텍스트를 추출했으나 일치하는 항목이 없습니다.<br>
@@ -539,6 +726,34 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       pdfStatus.style.color = 'var(--accent-warning)';
     }
+  }
+
+  // 🆕 P0: PDF 리뷰 모달
+  function showPDFReviewModal(filledFields, count) {
+    const modal = document.getElementById('pdf-review-modal');
+    const content = document.getElementById('pdf-review-content');
+    if (!modal || !content) return;
+    const fieldLabels = {
+      totalSalary: '총급여', creditCard: '신용카드 사용액',
+      cashReceipt: '체크카드/현금', pension: '연금저축',
+      medical: '의료비', insurance: '보험료',
+      education: '교육비', housing: '주택자금', donation: '기부금'
+    };
+    let html = `<div style="font-weight:700; margin-bottom:8px;">📄 <strong>${count}개</strong> 항목이 자동 입력되었습니다.</div>`;
+    filledFields.forEach(f => {
+      html += `<div style="display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid rgba(255,255,255,0.04);">
+        <span>${fieldLabels[f.label] || f.label}</span>
+        <span style="font-weight:600; color:var(--accent-secondary);">${f.value.toLocaleString()} 원</span>
+      </div>`;
+    });
+    content.innerHTML = html;
+    modal.style.display = 'flex';
+    document.getElementById('pdf-review-close').onclick = () => {
+      modal.style.display = 'none';
+      // 자동 계산 실행
+      const btn = document.getElementById('btn-calc-income-integrated');
+      if (btn) btn.click();
+    };
   }
 
   // 1. 테마 토글
@@ -572,6 +787,26 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // 3. 양도소득세 탭 입력 전환 제어 (부동산 vs 주식)
+  // 1-2. 양도/증여/상속 세그먼트 컨트롤 클릭 바인딩
+  const segmentButtons = document.querySelectorAll('.segment-btn');
+  const segmentGroups = document.querySelectorAll('.segment-group-capital');
+
+  segmentButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      segmentButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const activeSegment = btn.dataset.segment;
+      segmentGroups.forEach(group => {
+        if (group.classList.contains(activeSegment + '-group')) {
+          group.style.display = '';
+        } else {
+          group.style.display = 'none';
+        }
+      });
+    });
+  });
+
   const capitalTypeSelect = document.getElementById('capital-type');
   const formRealEstate = document.getElementById('form-real-estate');
   const formStock = document.getElementById('form-stock');
@@ -1146,6 +1381,31 @@ document.addEventListener('DOMContentLoaded', () => {
     showAccordionSection("acc-advice");
 
     showCalcStatus(false);
+    // 🆕 P0: 플로팅 요약 바 업데이트
+    updateFloatingBar(best, d);
+  });
+
+  function updateFloatingBar(best, d) {
+    const bar = document.getElementById('floating-result-bar');
+    const amtEl = document.getElementById('floating-bar-amount');
+    if (!bar || !amtEl) return;
+    const totalTax = best ? best.totalTax : 0;
+    if (totalTax > 0) {
+      amtEl.textContent = totalTax.toLocaleString() + ' 원';
+      bar.classList.add('active');
+      document.body.classList.add('floating-bar-visible');
+    } else {
+      bar.classList.remove('active');
+      document.body.classList.remove('floating-bar-visible');
+    }
+  }
+
+  // 🆕 P0: 플로팅 바 "결과 보기" → 스크롤
+  document.getElementById('floating-bar-btn').addEventListener('click', () => {
+    const resultCard = document.getElementById('inc-result-card');
+    if (resultCard) {
+      resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   });
 
   // 📤 리포트 복사하기
@@ -1721,6 +1981,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 단계형 섹션 초기화
   initStepSections();
+  goToStep(1);
   updateInputProgress();
 
   // 접근성: 툴팁에 role/tabindex 부여 및 aria-describedby 연결
@@ -1773,33 +2034,98 @@ function renderAdvice(containerId, adviceList, actionCallback) {
 
   adviceList.sort((a, b) => b.saving - a.saving);
 
-  const totalSlides = adviceList.length;
-  let currentSlide = 0;
+  // 🆕 P1: 총 절감액 배지
+  var totalSavings = adviceList.reduce(function(sum, item) { return sum + (item.saving || 0); }, 0);
+  if (totalSavings > 0) {
+    var badge = document.createElement('div');
+    badge.className = 'advice-total-savings-badge';
+    badge.innerHTML = '<span class="savings-label">📊 모두 적용 시 예상 추가 절감</span><span class="savings-amount">+ ' + totalSavings.toLocaleString() + ' 원</span>';
+    container.appendChild(badge);
+  }
 
-  const carousel = document.createElement('div');
+  // 🆕 P1: 상위 3개 스마트 피드 (태그 포함)
+  var topN = Math.min(3, adviceList.length);
+  var feed = document.createElement('div');
+  feed.className = 'advice-smart-feed';
+  for (var i = 0; i < topN; i++) {
+    var item = adviceList[i];
+    var tagHtml = '';
+    if (item.saving >= 1000000) {
+      tagHtml = '<span class="advice-tag high-value">💰 고수익</span>';
+    } else if (item.saving >= 500000) {
+      tagHtml = '<span class="advice-tag high-value">💰 중수익</span>';
+    }
+    if (item.type === 'warning' && item.saving > 0) {
+      tagHtml += '<span class="advice-tag urgent">⚠️ 긴급</span>';
+    }
+    if (!tagHtml && item.actionText) {
+      tagHtml = '<span class="advice-tag easy">✅ 간편</span>';
+    }
+
+    var card = document.createElement('div');
+    card.className = 'advice-card ' + (item.type || 'info');
+    card.innerHTML = [
+      '<div class="advice-header">',
+        '<span class="advice-title" style="font-size:0.9rem;">' + (i + 1) + '. ' + item.title + tagHtml + '</span>',
+        item.saving > 0 ? '<span class="advice-saving" style="font-size:0.75rem;">약 +' + item.saving.toLocaleString() + '원</span>' : '',
+      '</div>',
+      '<p class="advice-desc" style="font-size:0.8rem; line-height:1.4; margin-bottom:8px;">' + item.desc + '</p>',
+      item.actionText ? '<button class="advice-action-btn" style="padding:6px 10px; font-size:0.75rem;">' + item.actionText + ' ➔</button>' : ''
+    ].join('');
+
+    if (item.actionText) {
+      card.querySelector('.advice-action-btn').addEventListener('click', function() {
+        actionCallback(item.id, item.actionValue);
+        // 🆕 딥링크 스크롤: 해당 입력 필드로 포커스
+        var fieldId = item.fieldId || '';
+        if (fieldId) {
+          var el = document.getElementById(fieldId);
+          if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); el.focus(); }
+        }
+      });
+    }
+
+    feed.appendChild(card);
+  }
+  container.appendChild(feed);
+
+  // 남은 항목은 기존 캐러셀로
+  var remaining = adviceList.slice(topN);
+  if (remaining.length === 0) return;
+
+  var totalSlides = remaining.length;
+  var currentSlide = 0;
+
+  var expandToggle = document.createElement('button');
+  expandToggle.style.cssText = 'background:none; border:none; color:var(--accent-info); font-weight:700; font-size:0.78rem; cursor:pointer; padding:8px 0; width:100%; text-align:center;';
+  expandToggle.textContent = '▼ 추가 가이드 ' + remaining.length + '개 더 보기';
+  container.appendChild(expandToggle);
+
+  var carousel = document.createElement('div');
   carousel.className = 'advice-carousel';
+  carousel.style.display = 'none';
 
-  const track = document.createElement('div');
+  var track = document.createElement('div');
   track.className = 'advice-carousel-track';
 
-  adviceList.forEach((item, index) => {
-    const slide = document.createElement('div');
+  remaining.forEach(function(item, index) {
+    var slide = document.createElement('div');
     slide.className = 'advice-carousel-slide';
     slide.style.display = index === 0 ? 'block' : 'none';
 
-    const card = document.createElement('div');
-    card.className = `advice-card ${item.type}`;
-    card.innerHTML = `
-      <div class="advice-header">
-        <span class="advice-title" style="font-size:0.9rem;">${item.title}</span>
-        ${item.saving > 0 ? `<span class="advice-saving" style="font-size:0.75rem;">약 +${item.saving.toLocaleString()}원 절감</span>` : ''}
-      </div>
-      <p class="advice-desc" style="font-size:0.8rem; line-height:1.4; margin-bottom:8px;">${item.desc}</p>
-      ${item.actionText ? `<button class="advice-action-btn" style="padding:6px 10px; font-size:0.75rem;">${item.actionText} ➔</button>` : ''}
-    `;
+    var card = document.createElement('div');
+    card.className = 'advice-card ' + (item.type || 'info');
+    card.innerHTML = [
+      '<div class="advice-header">',
+        '<span class="advice-title" style="font-size:0.9rem;">' + item.title + '</span>',
+        item.saving > 0 ? '<span class="advice-saving" style="font-size:0.75rem;">약 +' + item.saving.toLocaleString() + '원 절감</span>' : '',
+      '</div>',
+      '<p class="advice-desc" style="font-size:0.8rem; line-height:1.4; margin-bottom:8px;">' + item.desc + '</p>',
+      item.actionText ? '<button class="advice-action-btn" style="padding:6px 10px; font-size:0.75rem;">' + item.actionText + ' ➔</button>' : ''
+    ].join('');
 
     if (item.actionText) {
-      card.querySelector('.advice-action-btn').addEventListener('click', () => {
+      card.querySelector('.advice-action-btn').addEventListener('click', function() {
         actionCallback(item.id, item.actionValue);
       });
     }
@@ -1811,43 +2137,49 @@ function renderAdvice(containerId, adviceList, actionCallback) {
   carousel.appendChild(track);
 
   function showSlide(index) {
-    const slides = track.querySelectorAll('.advice-carousel-slide');
-    slides.forEach(s => s.style.display = 'none');
+    var slides = track.querySelectorAll('.advice-carousel-slide');
+    slides.forEach(function(s) { s.style.display = 'none'; });
     currentSlide = (index + totalSlides) % totalSlides;
     slides[currentSlide].style.display = 'block';
-    const dots = carousel.querySelectorAll('.advice-carousel-dot');
-    dots.forEach((d, i) => d.classList.toggle('active', i === currentSlide));
-    const counter = carousel.querySelector('.advice-carousel-counter');
-    if (counter) counter.textContent = `${currentSlide + 1} / ${totalSlides}`;
+    var dots = carousel.querySelectorAll('.advice-carousel-dot');
+    dots.forEach(function(d, i) { d.classList.toggle('active', i === currentSlide); });
+    var counter = carousel.querySelector('.advice-carousel-counter');
+    if (counter) counter.textContent = (currentSlide + 1) + ' / ' + totalSlides;
   }
 
-  const nav = document.createElement('div');
+  expandToggle.addEventListener('click', function() {
+    var isHidden = carousel.style.display === 'none';
+    carousel.style.display = isHidden ? 'block' : 'none';
+    expandToggle.textContent = isHidden ? '▲ 접기' : '▼ 추가 가이드 ' + remaining.length + '개 더 보기';
+  });
+
+  var nav = document.createElement('div');
   nav.className = 'advice-carousel-nav';
 
-  const prevBtn = document.createElement('button');
+  var prevBtn = document.createElement('button');
   prevBtn.className = 'advice-carousel-btn';
   prevBtn.innerHTML = '&#9664;';
   prevBtn.setAttribute('aria-label', '이전 가이드');
-  prevBtn.addEventListener('click', () => showSlide(currentSlide - 1));
+  prevBtn.addEventListener('click', function() { showSlide(currentSlide - 1); });
 
-  const dotsContainer = document.createElement('div');
+  var dotsContainer = document.createElement('div');
   dotsContainer.className = 'advice-carousel-dots';
-  for (let i = 0; i < totalSlides; i++) {
-    const dot = document.createElement('span');
-    dot.className = `advice-carousel-dot${i === 0 ? ' active' : ''}`;
-    dot.addEventListener('click', () => showSlide(i));
+  for (var i = 0; i < totalSlides; i++) {
+    var dot = document.createElement('span');
+    dot.className = 'advice-carousel-dot' + (i === 0 ? ' active' : '');
+    dot.addEventListener('click', function(idx) { return function() { showSlide(idx); }; }(i));
     dotsContainer.appendChild(dot);
   }
 
-  const counter = document.createElement('span');
+  var counter = document.createElement('span');
   counter.className = 'advice-carousel-counter';
-  counter.textContent = `1 / ${totalSlides}`;
+  counter.textContent = '1 / ' + totalSlides;
 
-  const nextBtn = document.createElement('button');
+  var nextBtn = document.createElement('button');
   nextBtn.className = 'advice-carousel-btn';
   nextBtn.innerHTML = '&#9654;';
   nextBtn.setAttribute('aria-label', '다음 가이드');
-  nextBtn.addEventListener('click', () => showSlide(currentSlide + 1));
+  nextBtn.addEventListener('click', function() { showSlide(currentSlide + 1); });
 
   nav.appendChild(prevBtn);
   nav.appendChild(counter);

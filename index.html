@@ -67,15 +67,33 @@
           <div style="background:rgba(255,255,255,0.06); height:6px; border-radius:3px; overflow:hidden;">
             <div id="progress-fill" style="background:linear-gradient(90deg,var(--accent-primary),var(--accent-secondary)); width:0%; height:100%; border-radius:3px; transition:width 0.4s ease;"></div>
           </div>
-          <div style="display:flex; gap:4px; margin-top:6px; font-size:0.65rem; opacity:0.6;">
-            <span id="step-1-label" style="flex:1; text-align:center;">① 소득/카드</span>
-            <span id="step-2-label" style="flex:1; text-align:center;">② 금융/공제</span>
-            <span id="step-3-label" style="flex:1; text-align:center;">③ 부양가족</span>
+          <!-- 🆕 Stepper 네비게이션 (P1) -->
+          <div class="stepper-container" id="stepper-nav">
+            <div class="stepper-step active" data-step="1">
+              <div class="stepper-dot">1</div>
+              <span class="stepper-label">소득/카드</span>
+            </div>
+            <div class="stepper-connector" data-connector="1"></div>
+            <div class="stepper-step" data-step="2">
+              <div class="stepper-dot">2</div>
+              <span class="stepper-label">금융/공제</span>
+            </div>
+            <div class="stepper-connector" data-connector="2"></div>
+            <div class="stepper-step" data-step="3">
+              <div class="stepper-dot">3</div>
+              <span class="stepper-label">부양가족</span>
+            </div>
           </div>
         </div>
 
-        <!-- 📄 홈택스 PDF 드롭존 -->
-        <div id="pdf-dropzone" class="pdf-dropzone">
+        <!-- 📄 홈택스 PDF 드롭존 토글 버튼 및 영역 -->
+        <div class="pdf-toggle-container" style="margin-bottom:1rem;">
+          <button type="button" id="pdf-toggle-btn" class="pdf-toggle-btn" style="width:100%; padding:10px 14px; background:rgba(108,99,255,0.1); border:1px solid rgba(108,99,255,0.2); border-radius:8px; color:var(--text-primary-dark); font-weight:700; font-size:0.85rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:var(--transition-smooth);">
+            <span>📄 홈택스 PDF로 자동 입력하기</span>
+            <span id="pdf-toggle-arrow" style="font-size:0.7rem; opacity:0.7;">▼</span>
+          </button>
+        </div>
+        <div id="pdf-dropzone" class="pdf-dropzone collapsed" style="display:none; transition:max-height 0.3s ease; overflow:hidden;">
           <div class="pdf-dropzone-content">
             <span class="pdf-dropzone-icon">📄</span>
             <h3>홈택스 PDF로 자동 입력</h3>
@@ -183,10 +201,10 @@
             <div class="step-section-header" data-target="spouse-b-body" style="cursor:pointer; user-select:none;">
               <h4 style="font-size:0.9rem; color:var(--accent-secondary); margin-bottom:0; font-weight:700; display:flex; align-items:center; justify-content:space-between;">
                 <span>📌 2단계: 배우자 B 기본정보</span>
-                <span style="font-size:0.7rem; opacity:0.5;">▲</span>
+                <span style="font-size:0.7rem; opacity:0.5;">▼</span>
               </h4>
             </div>
-            <div id="spouse-b-body" class="step-section-body">
+            <div id="spouse-b-body" class="step-section-body collapsed">
             <div class="form-group">
               <label>연봉(총급여) 또는 사업소득 <span class="tooltip-icon" data-tooltip="연간 총급여액 또는 사업소득 금액입니다. 근로소득은 총급여, 사업소득은 필요경비 차감 전 금액을 입력하세요.">?</span></label>
               <input type="text" inputmode="numeric" id="inc-b-salary" class="form-input money-input" value="45,000,000">
@@ -273,10 +291,10 @@
           <div class="step-section-header" data-target="dependents-body" style="cursor:pointer; user-select:none;">
             <h4 style="font-size:0.95rem; font-weight:700; display:flex; align-items:center; justify-content:space-between; margin-bottom:0;">
               <span>👥 3단계: 부양가족 및 지출내역 상세조율</span>
-              <span style="font-size:0.7rem; opacity:0.5;">▲</span>
+              <span style="font-size:0.7rem; opacity:0.5;">▼</span>
             </h4>
           </div>
-          <div id="dependents-body" class="step-section-body">
+          <div id="dependents-body" class="step-section-body collapsed">
         <div class="people-list" id="inc-couple-ye-people">
           <div class="person-card" data-id="1">
             <div style="display:flex; flex-direction:column; gap:8px; width:100%;">
@@ -328,7 +346,12 @@
         </div><!-- /dependents-body -->
 
         <div id="income-form-error" class="form-error-inline"></div>
-        <div style="display:flex; gap:10px; margin-top:1.5rem;">
+        <!-- 🆕 Stepper 네비게이션 버튼 (P1) -->
+        <div class="stepper-nav-buttons" id="stepper-nav-buttons">
+          <button class="stepper-nav-btn" id="stepper-prev" disabled>◀ 이전</button>
+          <button class="stepper-nav-btn primary" id="stepper-next">다음 ▶</button>
+        </div>
+        <div style="display:flex; gap:10px; margin-top:1rem;">
           <button class="btn-add-person" id="btn-add-couple-dep">➕ 부양가족 추가</button>
           <button class="btn-primary" style="margin-top:0;" id="btn-calc-income-integrated">🎯 원스톱 절세 계산 &amp; 시뮬레이션</button>
         </div>
@@ -793,7 +816,14 @@
 
     <!-- ==================== 4. 양도/증여/상속 대분류 탭 ==================== -->
     <section class="calculator-panel" id="tab-capital" role="tabpanel" aria-label="양도/증여/상속">
-      <div class="input-card">
+      <!-- 🆕 Segmented Control (세그먼트 탭) 추가 -->
+      <div class="segment-control-wrapper" style="grid-column: 1 / -1; margin-bottom: 1.5rem; display: flex; gap: 8px; background: rgba(0,0,0,0.15); padding: 4px; border-radius: 10px;">
+        <button type="button" class="segment-btn active" data-segment="transfer" style="flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-secondary-dark); font-weight: 700; font-size: 0.85rem; border-radius: 6px; cursor: pointer; transition: var(--transition-smooth); text-align: center;">🏢 양도소득</button>
+        <button type="button" class="segment-btn" data-segment="holding" style="flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-secondary-dark); font-weight: 700; font-size: 0.85rem; border-radius: 6px; cursor: pointer; transition: var(--transition-smooth); text-align: center;">🏠 보유세</button>
+        <button type="button" class="segment-btn" data-segment="gift" style="flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-secondary-dark); font-weight: 700; font-size: 0.85rem; border-radius: 6px; cursor: pointer; transition: var(--transition-smooth); text-align: center;">🎁 증여/상속</button>
+      </div>
+
+      <div class="input-card segment-group-capital transfer-group">
         <h2 class="card-title">🏠 부동산 &amp; 주식 양도소득세</h2>
         <div class="form-group">
           <label for="capital-type">양도 자산 종류</label>
@@ -844,7 +874,7 @@
         <button class="btn-primary" id="btn-calc-capital">🎯 양도소득세 계산</button>
       </div>
 
-      <div class="result-card">
+      <div class="result-card segment-group-capital transfer-group">
         <h2 class="card-title">📊 양도소득세 결과</h2>
         <div class="result-item"><span>총 양도차익</span><span id="cap-res-gain">0 원</span></div>
         <div class="result-item"><span>장기보유특별공제</span><span id="cap-res-special">0 원</span></div>
@@ -859,7 +889,7 @@
       </div>
 
       <!-- 🏠 부동산 보유세 (재산세 + 종합부동산세) -->
-      <div class="input-card" style="grid-column: 1 / -1; margin-top: 1.5rem;">
+      <div class="input-card segment-group-capital holding-group" style="grid-column: 1 / -1; margin-top: 1.5rem; display: none;">
         <h2 class="card-title">🏠 부동산 보유세 (재산세 + 종합부동산세)</h2>
         <div class="grid-2col" style="display:grid; gap:1.5rem;">
           <div>
@@ -888,7 +918,7 @@
       </div>
 
       <!-- 🏠 간주임대료 계산기 (2026년: 2주택 고가 과세) -->
-      <div class="input-card" style="grid-column: 1 / -1; margin-top: 1.5rem;">
+      <div class="input-card segment-group-capital holding-group" style="grid-column: 1 / -1; margin-top: 1.5rem; display: none;">
         <h2 class="card-title">🏠 간주임대료 계산기 (2026년: 2주택 고가 과세 신설)</h2>
         <div class="grid-2col" style="display:grid; gap:1.5rem;">
           <div>
@@ -928,7 +958,7 @@
       </div>
 
       <!-- 🏛️ 상속세 계산기 (2025~2026 개정 반영) -->
-      <div class="input-card" style="grid-column: 1 / -1; margin-top: 1.5rem;">
+      <div class="input-card segment-group-capital gift-group" style="grid-column: 1 / -1; margin-top: 1.5rem; display: none;">
         <h2 class="card-title">🏛️ 상속세 계산기 (2025~2026 개정 반영)</h2>
         <div class="grid-2col" style="display:grid; gap:1.5rem;">
           <div>
@@ -975,7 +1005,7 @@
       </div>
 
       <!-- 💍 혼인·출산 증여재산공제 계산기 -->
-      <div class="input-card" style="grid-column: 1 / -1; margin-top: 1.5rem;">
+      <div class="input-card segment-group-capital gift-group" style="grid-column: 1 / -1; margin-top: 1.5rem; display: none;">
         <h2 class="card-title">💍 혼인·출산 증여재산공제 (최대 1.5억 비과세)</h2>
         <div class="grid-2col" style="display:grid; gap:1.5rem;">
           <div>
@@ -1009,7 +1039,7 @@
       </div>
 
       <!-- 🎁 10년 주기 증여 플랜 + 증여세 계산 -->
-      <div class="input-card" style="grid-column: 1 / -1; margin-top: 1.5rem;">
+      <div class="input-card segment-group-capital gift-group" style="grid-column: 1 / -1; margin-top: 1.5rem; display: none;">
         <h2 class="card-title">📅 10년 주기 증여 플랜 &amp; 증여세 계산</h2>
         <div class="grid-2col" style="display:grid; gap:1.5rem;">
           <div>
@@ -1064,7 +1094,7 @@
       </div>
 
       <!-- 양도소득 명의 이전 절세 시뮬레이터 -->
-      <div class="input-card" style="grid-column: 1 / -1; margin-top: 1.5rem;">
+      <div class="input-card segment-group-capital transfer-group" style="grid-column: 1 / -1; margin-top: 1.5rem;">
         <h2 class="card-title">🎁 자산 이전(배우자 증여 후 매도) 절세 시뮬레이션</h2>
         <div class="gift-sell-grid">
           <div>
@@ -1103,6 +1133,25 @@
         </div>
       </div>
     </section>
+  <!-- 🆕 P0: 플로팅 결과 요약 바 (모바일) -->
+  <div class="floating-result-bar" id="floating-result-bar">
+    <div class="floating-bar-left">
+      <span class="floating-bar-label">최적화 합산 세액</span>
+      <span class="floating-bar-amount" id="floating-bar-amount">0 원</span>
+    </div>
+    <button class="floating-bar-btn" id="floating-bar-btn">📊 결과 보기</button>
+  </div>
+
+  <!-- 🆕 P0: PDF 파싱 완료 모달 -->
+  <div id="pdf-review-modal" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.6); backdrop-filter:blur(4px); align-items:center; justify-content:center;">
+    <div style="background:var(--card-bg-dark); border:1px solid var(--card-border-dark); border-radius:16px; padding:2rem; max-width:420px; width:90%; max-height:80vh; overflow-y:auto;">
+      <h3 style="font-size:1rem; font-weight:700; margin-bottom:12px;">✅ PDF 자동 입력 완료</h3>
+      <div id="pdf-review-content" style="font-size:0.82rem; line-height:1.6; margin-bottom:1rem;"></div>
+      <div style="background:rgba(0,212,170,0.06); border-radius:8px; padding:10px; font-size:0.75rem; margin-bottom:1rem;">
+        💡 초록색으로 강조된 필드를 확인 후, 필요 시 금액을 수정할 수 있습니다.
+      </div>
+      <button class="btn-primary" id="pdf-review-close" style="margin-top:0;">확인하고 계산하기</button>
+    </div>
   </div>
 
   <!-- Disclaimer Footer -->
