@@ -1038,13 +1038,40 @@ body.light-mode .pdf-dropzone {
     font-size: 0.72rem;
   }
 
-  /* Nav tabs */
+  /* Nav tabs — 🆕 모바일 하단 탭 바 (Bottom Tab Bar) 고정 및 레이아웃 조정 */
   .tab-navigation {
-    margin-bottom: 1.25rem;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    margin-bottom: 0;
+    background: var(--card-bg-dark);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--card-border-dark);
+    border-radius: 16px 16px 0 0;
+    padding: 8px 10px 22px 10px; /* Safe area padding */
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+    gap: 4px;
+  }
+  body.light-mode .tab-navigation {
+    background: rgba(255, 255, 255, 0.85);
+    border-top: 1px solid var(--card-border-light);
   }
   .tab-btn {
-    font-size: 0.85rem;
-    padding: 10px 10px;
+    font-size: 0.72rem;
+    padding: 8px 4px;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+  /* 하단 탭 바로 인한 body 및 플로팅 바 하단 간격 확보 */
+  body {
+    padding-bottom: 90px !important;
+  }
+  .floating-result-bar {
+    bottom: 74px !important;
   }
 
   /* Cards padding */
