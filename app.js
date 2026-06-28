@@ -1426,7 +1426,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px;">
           <div class="form-group" style="margin-bottom:0;">
             <label>가족 이름</label>
-            <input type="text" class="form-input opt-dep-name" value="가족 ${nextId}" placeholder="예: 홍길동">
+            <input type="text" class="form-input opt-dep-name" value="" placeholder="예: 홍길동">
           </div>
           <div class="form-group" style="margin-bottom:0;">
             <label>관계 설정</label>
@@ -1481,9 +1481,15 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Helper functions for income integrated calculation ──
 
   function parseIncomeInputs() {
+    var aBizRev = parseVal("inc-a-business-revenue");
+    var bBizRev = parseVal("inc-b-business-revenue");
     return {
       aSalary: parseVal("inc-a-salary"),
-      aType: document.getElementById("inc-a-type").value,
+      aBusinessRevenue: aBizRev,
+      aBusinessExpense: parseVal("inc-a-business-expense"),
+      aPensionIncome: parseVal("inc-a-pension-income"),
+      aOtherRevenue: parseVal("inc-a-other-revenue"),
+      aOtherExpense: parseVal("inc-a-other-expense"),
       aCard: parseVal("inc-a-card"),
       aYellow: parseVal("inc-a-yellow"),
       aPension: parseVal("inc-a-pension"),
@@ -1493,8 +1499,13 @@ document.addEventListener('DOMContentLoaded', () => {
       aIsaIncome: parseVal("inc-a-isa"),
       aIsaType: document.getElementById("inc-a-isa-type").value,
       aBondSeparated: parseVal("inc-a-bond"),
+      aType: aBizRev > 0 ? 'business' : 'wage',
       bSalary: parseVal("inc-b-salary"),
-      bType: document.getElementById("inc-b-type").value,
+      bBusinessRevenue: bBizRev,
+      bBusinessExpense: parseVal("inc-b-business-expense"),
+      bPensionIncome: parseVal("inc-b-pension-income"),
+      bOtherRevenue: parseVal("inc-b-other-revenue"),
+      bOtherExpense: parseVal("inc-b-other-expense"),
       bCard: parseVal("inc-b-card"),
       bYellow: parseVal("inc-b-yellow"),
       bPension: parseVal("inc-b-pension"),
@@ -1504,6 +1515,7 @@ document.addEventListener('DOMContentLoaded', () => {
       bIsaIncome: parseVal("inc-b-isa"),
       bIsaType: document.getElementById("inc-b-isa-type").value,
       bBondSeparated: parseVal("inc-b-bond"),
+      bType: bBizRev > 0 ? 'business' : 'wage',
       aVentureInvestment: parseVal("inc-a-venture"),
       aHousingSubscription: parseVal("inc-a-housing-sub"),
       aHousingLoanRepay: parseVal("inc-a-housing-loan"),
@@ -1555,13 +1567,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function buildSpouseCalcOpts(d, prefix) {
     const isA = prefix === "a";
+    const sal = isA ? d.aSalary : d.bSalary;
+    const bizRev = isA ? d.aBusinessRevenue : d.bBusinessRevenue;
+    const bizExp = isA ? d.aBusinessExpense : d.bBusinessExpense;
+    const type = bizRev > 0 ? 'business' : 'wage';
+    const totalIncome = type === 'wage' ? sal : bizRev;
+    const expense = type === 'business' ? bizExp : 0;
     return {
-      totalSalary: isA ? d.aSalary : d.bSalary,
-      businessRevenue: isA ? d.aBusinessRevenue : d.bBusinessRevenue,
-      businessExpense: isA ? d.aBusinessExpense : d.bBusinessExpense,
-      pensionIncome: isA ? d.aPensionIncome : d.bPensionIncome,
-      otherRevenue: isA ? d.aOtherRevenue : d.bOtherRevenue,
-      otherExpense: isA ? d.aOtherExpense : d.bOtherExpense,
+      totalIncome: totalIncome,
+      incomeType: type,
+      expense: expense,
       yellowUmbrella: isA ? d.aYellow : d.bYellow,
       pensionSavings: isA ? d.aPension : d.bPension,
       irpSavings: isA ? d.aIrp : d.bIrp,

@@ -664,6 +664,29 @@ body.light-mode .step-section-header:hover {
   background: rgba(0,0,0,0.03);
 }
 
+/* 섹션 라벨 - 소득/공제 통합 구분선 */
+.section-label-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 10px;
+}
+.section-label-line {
+  flex: 1;
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+}
+body.light-mode .section-label-line {
+  background: rgba(0,0,0,0.08);
+}
+.section-label-text {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+
 /* 🆕 툴팁(Tooltip) 관련 스타일 */
 .tooltip-icon {
   display: inline-flex;
