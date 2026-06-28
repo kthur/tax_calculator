@@ -788,6 +788,48 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+
+  // Sync Target Selectors
+  const targetSelectors = [
+    { id: 'pension-target', salary: 'pension-salary', amount: 'pension-amount' },
+    { id: 'card-target', salary: 'card-salary', amount: 'card-usage-amount' },
+    { id: 'sports-target', salary: 'sports-salary', amount: 'sports-fee' },
+    { id: 'hometown-target', amount: 'hometown-amount' }, // only has amount, no salary
+    { id: 'isa-target', salary: 'isa-salary', amount: 'isa-annual' }
+  ];
+
+  targetSelectors.forEach(config => {
+    const sel = document.getElementById(config.id);
+    if (!sel) return;
+    sel.addEventListener('change', (e) => {
+      const spouse = e.target.value; // 'a' or 'b'
+      if (config.salary) {
+        const baseSalary = document.getElementById(`inc-${spouse}-salary`);
+        if (baseSalary) {
+          document.getElementById(config.salary).value = baseSalary.value;
+        }
+      }
+      
+      // Try to auto-fill amount if there's a corresponding field in base input
+      if (config.amount) {
+        let baseAmountId = null;
+        if (config.id === 'pension-target') baseAmountId = `inc-${spouse}-pension`;
+        if (config.id === 'card-target') baseAmountId = `inc-${spouse}-card`;
+        if (config.id === 'isa-target') baseAmountId = `inc-${spouse}-isa`;
+        
+        if (baseAmountId) {
+          const baseAmount = document.getElementById(baseAmountId);
+          if (baseAmount) {
+            document.getElementById(config.amount).value = baseAmount.value;
+          }
+        }
+      }
+      
+      // Trigger calculation
+      sel.dispatchEvent(new Event('input'));
+    });
+  });
+
   // 1. 테마 토글
   const themeToggleBtn = document.getElementById('themeToggleBtn');
   themeToggleBtn.addEventListener('click', () => {
@@ -820,13 +862,46 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 3. 양도소득세 탭 입력 전환 제어 (부동산 vs 주식)
   // 1-2. 양도/증여/상속 세그먼트 컨트롤 클릭 바인딩
-  const segmentButtons = document.querySelectorAll('.segment-btn');
+  // Profile Segment Toggle
+  const profileSegmentBtns = document.querySelectorAll('.profile-segment-wrapper .segment-btn');
+  const profileGroups = document.querySelectorAll('.profile-segment-group');
+  
+  profileSegmentBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      profileSegmentBtns.forEach(b => {
+        b.classList.remove('active');
+        b.style.background = 'transparent';
+        b.style.color = 'var(--text-secondary-dark)';
+      });
+      btn.classList.add('active');
+      btn.style.background = 'var(--accent-primary)';
+      btn.style.color = '#fff';
+
+      const targetGroup = btn.dataset.segment;
+      profileGroups.forEach(group => {
+        if (group.dataset.group === targetGroup) {
+          group.style.display = 'block';
+        } else {
+          group.style.display = 'none';
+        }
+      });
+    });
+  });
+
+  // Capital Segment Toggle
+  const capitalSegmentBtns = document.querySelectorAll('.segment-control-wrapper:not(.profile-segment-wrapper) .segment-btn');
   const segmentGroups = document.querySelectorAll('.segment-group-capital');
 
-  segmentButtons.forEach(btn => {
+  capitalSegmentBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      segmentButtons.forEach(b => b.classList.remove('active'));
+      capitalSegmentBtns.forEach(b => {
+        b.classList.remove('active');
+        b.style.background = 'transparent';
+        b.style.color = 'var(--text-secondary-dark)';
+      });
       btn.classList.add('active');
+      btn.style.background = 'var(--accent-primary)';
+      btn.style.color = '#fff';
 
       const activeSegment = btn.dataset.segment;
       segmentGroups.forEach(group => {
