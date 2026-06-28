@@ -49,6 +49,7 @@
 <button aria-controls="tab-profile" aria-selected="true" class="tab-btn active" data-tab="profile" role="tab">👤 가족 프로필</button>
 <button aria-controls="tab-income" aria-selected="false" class="tab-btn" data-tab="income" role="tab">📊 소득세·연말정산</button>
 <button aria-controls="tab-business" aria-selected="false" class="tab-btn" data-tab="business" role="tab">🏢 사업·자산</button>
+<button aria-controls="tab-capital" aria-selected="false" class="tab-btn" data-tab="capital" role="tab">🏠 양도·증여·상속</button>
 <button aria-controls="tab-report" aria-selected="false" class="tab-btn" data-tab="report" role="tab">🏆 통합 리포트</button>
 </nav>
 <!-- ==================== 1. 종합소득세 대분류 탭 ==================== -->
@@ -57,6 +58,22 @@
 <div class="input-card">
 <h2 class="card-title">👤 가족 프로필 (통합 입력)</h2>
 <!-- 진행률 표시줄 -->
+<div class="stepper-container">
+  <div class="stepper-step active" data-step="1">
+    <span class="stepper-dot">1</span>
+    <span class="stepper-label">배우자 A</span>
+  </div>
+  <div class="stepper-connector"></div>
+  <div class="stepper-step" data-step="2">
+    <span class="stepper-dot">2</span>
+    <span class="stepper-label">배우자 B</span>
+  </div>
+  <div class="stepper-connector"></div>
+  <div class="stepper-step" data-step="3">
+    <span class="stepper-dot">3</span>
+    <span class="stepper-label">부양가족</span>
+  </div>
+</div>
 
 <!-- 📄 홈택스 PDF 드롭존 토글 버튼 및 영역 -->
 
@@ -186,6 +203,7 @@
 </div>
 </div>
 </div>
+<div class="tax-danger-alert" id="spouse-a-income-warning" style="display:none; margin-top:10px; padding:10px; border-radius:8px; font-size:0.8rem; line-height:1.5;"></div>
 </div><!-- /spouse-a-body -->
 <!-- 배우자 B 입력 영역 -->
 <div class="spouse-container-box profile-segment-group" data-group="profile-b" id="spouse-b-container" style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); display:none;">
@@ -287,6 +305,7 @@
 <input class="form-input money-input" id="inc-b-housing-loan" inputmode="numeric" style="padding:6px; font-size:0.8rem;" type="text" value="0"/>
 </div>
 </div>
+<div class="tax-danger-alert" id="spouse-b-income-warning" style="display:none; margin-top:10px; padding:10px; border-radius:8px; font-size:0.8rem; line-height:1.5;"></div>
 </div><!-- /spouse-b-body -->
 </div>
 </div>
@@ -348,10 +367,14 @@
 </div><!-- /dependents-body -->
 <div class="form-error-inline" id="income-form-error"></div>
 <!-- 🆕 Stepper 네비게이션 버튼 (P1) -->
+<div class="stepper-nav-buttons" style="margin-bottom: 1rem;">
+  <button type="button" class="stepper-nav-btn" id="stepper-prev" disabled>◀ 이전</button>
+  <button type="button" class="stepper-nav-btn primary" id="stepper-next">다음 ▶</button>
+</div>
 
 <div style="display:flex; gap:10px; margin-top:1rem;">
-<button class="btn-add-person" id="btn-add-couple-dep">➕ 부양가족 추가</button>
-<button class="btn-primary" id="btn-calc-income-integrated" style="margin-top:0;">🎯 원스톱 절세 계산 &amp; 시뮬레이션</button>
+<button class="btn-add-person" id="btn-add-couple-dep" style="display:none; margin-top:0;">➕ 부양가족 추가</button>
+<button class="btn-primary" id="btn-calc-income-integrated" style="margin-top:0; display:none;">🎯 원스톱 절세 계산 &amp; 시뮬레이션</button>
 </div>
 </div>
 <!-- Right Area: 통합 절세 리포트 출력 -->
@@ -492,7 +515,10 @@
 </div>
 <div class="form-group">
 <label>연간 총급여 (연말정산 기준) <span class="tooltip-icon" data-tooltip="연말정산 시 적용되는 연간 총급여액입니다.">?</span></label>
-<input class="form-input money-input" id="pension-salary" inputmode="numeric" type="text" value="70,000,000"/>
+<div style="display:flex; gap:6px;">
+  <input class="form-input money-input" id="pension-salary" inputmode="numeric" type="text" value="70,000,000" readonly style="background:rgba(255,255,255,0.02); color:#aaa; cursor:not-allowed; flex:1;"/>
+  <a href="#" class="btn-edit-profile-salary" data-spouse-id="pension-target" style="font-size:0.75rem; text-decoration:none; color:var(--accent-primary); display:flex; align-items:center; white-space:nowrap; border:1px solid rgba(108,99,255,0.3); padding:4px 8px; border-radius:6px; background:rgba(108,99,255,0.05); transition:all 0.2s;">프로필 수정</a>
+</div>
 </div>
 <div class="form-group">
 <label>현재까지 납입한 연금저축 <span class="tooltip-icon" data-tooltip="올해 1월부터 현재까지 납입한 연금저축 총액입니다.">?</span></label>
@@ -522,7 +548,10 @@
 </div>
 <div class="form-group">
 <label>연간 총급여 <span class="tooltip-icon" data-tooltip="연간 총급여액을 입력하세요. 카드 소득공제 한도 계산에 사용됩니다.">?</span></label>
-<input class="form-input money-input" id="card-salary" inputmode="numeric" type="text" value="70,000,000"/>
+<div style="display:flex; gap:6px;">
+  <input class="form-input money-input" id="card-salary" inputmode="numeric" type="text" value="70,000,000" readonly style="background:rgba(255,255,255,0.02); color:#aaa; cursor:not-allowed; flex:1;"/>
+  <a href="#" class="btn-edit-profile-salary" data-spouse-id="card-target" style="font-size:0.75rem; text-decoration:none; color:var(--accent-primary); display:flex; align-items:center; white-space:nowrap; border:1px solid rgba(108,99,255,0.3); padding:4px 8px; border-radius:6px; background:rgba(108,99,255,0.05); transition:all 0.2s;">프로필 수정</a>
+</div>
 </div>
 <div class="form-group">
 <label>현재까지 신용카드 사용액 <span class="tooltip-icon" data-tooltip="올해 1월부터 현재까지의 신용카드 사용액입니다.">?</span></label>
@@ -569,7 +598,10 @@
     </div>
     <div class="form-group">
     <label>연간 총급여 <span class="tooltip-icon" data-tooltip="연간 총급여액입니다. 7,000만 원 이하 시 체육시설 공제 혜택을 받을 수 있습니다.">?</span></label>
-<input class="form-input money-input" id="sports-salary" inputmode="numeric" type="text" value="50,000,000"/>
+<div style="display:flex; gap:6px;">
+  <input class="form-input money-input" id="sports-salary" inputmode="numeric" type="text" value="50,000,000" readonly style="background:rgba(255,255,255,0.02); color:#aaa; cursor:not-allowed; flex:1;"/>
+  <a href="#" class="btn-edit-profile-salary" data-spouse-id="sports-target" style="font-size:0.75rem; text-decoration:none; color:var(--accent-primary); display:flex; align-items:center; white-space:nowrap; border:1px solid rgba(108,99,255,0.3); padding:4px 8px; border-radius:6px; background:rgba(108,99,255,0.05); transition:all 0.2s;">프로필 수정</a>
+</div>
 </div>
 <div class="form-group">
 <label>연간 수영장/체육단련장 이용료 <span class="tooltip-icon" data-tooltip="수영장, 체육단련장 등 시설 이용료 연간 합계액입니다.">?</span></label>
@@ -638,7 +670,10 @@
 </div>
 <div class="form-group">
 <label>총급여 (서민형 자격 확인용) <span class="tooltip-icon" data-tooltip="서민형 ISA 가입 자격 확인을 위한 연간 총급여입니다.">?</span></label>
-<input class="form-input money-input" id="isa-salary" inputmode="numeric" type="text" value="45,000,000"/>
+<div style="display:flex; gap:6px;">
+  <input class="form-input money-input" id="isa-salary" inputmode="numeric" type="text" value="45,000,000" readonly style="background:rgba(255,255,255,0.02); color:#aaa; cursor:not-allowed; flex:1;"/>
+  <a href="#" class="btn-edit-profile-salary" data-spouse-id="isa-target" style="font-size:0.75rem; text-decoration:none; color:var(--accent-primary); display:flex; align-items:center; white-space:nowrap; border:1px solid rgba(108,99,255,0.3); padding:4px 8px; border-radius:6px; background:rgba(108,99,255,0.05); transition:all 0.2s;">프로필 수정</a>
+</div>
 </div>
 <div style="font-size:0.78rem; margin-bottom:10px;">
 <label><input id="isa-financial-comp-tax" type="checkbox"/> 금융소득종합과세 대상자 (2,000만↑)</label>

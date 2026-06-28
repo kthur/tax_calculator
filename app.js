@@ -168,6 +168,34 @@ document.addEventListener('DOMContentLoaded', () => {
     if (targetStep < 1 || targetStep > 3) return;
     stepperCurrentStep = targetStep;
 
+    // Sync with Segmented Control
+    const segmentKeys = ['profile-a', 'profile-b', 'profile-dep'];
+    const targetGroup = segmentKeys[targetStep - 1];
+    
+    // Update Segmented Control Buttons
+    const profileSegmentBtns = document.querySelectorAll('.profile-segment-wrapper .segment-btn');
+    profileSegmentBtns.forEach(btn => {
+      const isTarget = btn.dataset.segment === targetGroup;
+      btn.classList.toggle('active', isTarget);
+      if (isTarget) {
+        btn.style.background = 'var(--accent-primary)';
+        btn.style.color = '#fff';
+      } else {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-secondary-dark)';
+      }
+    });
+
+    // Update Profile Groups Display
+    const profileGroups = document.querySelectorAll('.profile-segment-group');
+    profileGroups.forEach(group => {
+      if (group.dataset.group === targetGroup) {
+        group.style.display = 'block';
+      } else {
+        group.style.display = 'none';
+      }
+    });
+
     // Show/hide bodies
     STEP_BODIES.forEach((id, idx) => {
       const body = document.getElementById(id);
@@ -182,6 +210,12 @@ document.addEventListener('DOMContentLoaded', () => {
         body.style.display = 'none';
       }
     });
+
+    // Hide/show '부양가족 추가' button
+    const addDepBtn = document.getElementById('btn-add-couple-dep');
+    if (addDepBtn) {
+      addDepBtn.style.display = targetStep === 3 ? 'block' : 'none';
+    }
 
     // Update stepper dots
     const steps = document.querySelectorAll('.stepper-step');
@@ -785,9 +819,139 @@ document.addEventListener('DOMContentLoaded', () => {
       // 자동 계산 실행
       const btn = document.getElementById('btn-calc-income-integrated');
       if (btn) btn.click();
+      // 통합 리포트 탭으로 자동 이동 및 포커스
+      const reportTabBtn = document.querySelector('.tab-btn[data-tab="report"]');
+      if (reportTabBtn) reportTabBtn.click();
     };
   }
 
+
+  // ──────────────────────────────────────────────
+  // 🆕 P0: 실시간 세무 경고, ISA 유형 검증 및 총급여 동기화 로직
+  // ──────────────────────────────────────────────
+
+  function syncDependentSalaries() {
+    const spouseASalary = document.getElementById('inc-a-salary')?.value || '0';
+    const spouseBSalary = document.getElementById('inc-b-salary')?.value || '0';
+
+    // Pension
+    const pensionTarget = document.getElementById('pension-target')?.value || 'a';
+    const pensionSalaryEl = document.getElementById('pension-salary');
+    if (pensionSalaryEl) {
+      pensionSalaryEl.value = pensionTarget === 'a' ? spouseASalary : spouseBSalary;
+      pensionSalaryEl.dispatchEvent(new Event('input'));
+    }
+
+    // Card
+    const cardTarget = document.getElementById('card-target')?.value || 'a';
+    const cardSalaryEl = document.getElementById('card-salary');
+    if (cardSalaryEl) {
+      cardSalaryEl.value = cardTarget === 'a' ? spouseASalary : spouseBSalary;
+      cardSalaryEl.dispatchEvent(new Event('input'));
+    }
+
+    // Sports
+    const sportsTarget = document.getElementById('sports-target')?.value || 'a';
+    const sportsSalaryEl = document.getElementById('sports-salary');
+    if (sportsSalaryEl) {
+      sportsSalaryEl.value = sportsTarget === 'a' ? spouseASalary : spouseBSalary;
+      sportsSalaryEl.dispatchEvent(new Event('input'));
+    }
+
+    // ISA
+    const isaTarget = document.getElementById('isa-target')?.value || 'a';
+    const isaSalaryEl = document.getElementById('isa-salary');
+    if (isaSalaryEl) {
+      isaSalaryEl.value = isaTarget === 'a' ? spouseASalary : spouseBSalary;
+      isaSalaryEl.dispatchEvent(new Event('input'));
+    }
+  }
+
+  function checkSpouseIncomeWarnings(spouse) {
+    const suffix = spouse === 'a' ? 'a' : 'b';
+    const salary = parseVal(`inc-${suffix}-salary`) || 0;
+    const bizRevenue = parseVal(`inc-${suffix}-business-revenue`) || 0;
+    const bizExpense = parseVal(`inc-${suffix}-business-expense`) || 0;
+    const pension = parseVal(`inc-${suffix}-pension-income`) || 0;
+    const otherRevenue = parseVal(`inc-${suffix}-other-revenue`) || 0;
+    const otherExpense = parseVal(`inc-${suffix}-other-expense`) || 0;
+    const finGen = parseVal(`inc-${suffix}-financial-gen`) || 0;
+    const finOverseas = parseVal(`inc-${suffix}-financial-overseas`) || 0;
+
+    const bizIncome = Math.max(0, bizRevenue - bizExpense);
+    const otherIncome = Math.max(0, otherRevenue - otherExpense);
+    const finIncome = finGen + finOverseas;
+    const nonWageIncome = bizIncome + pension + otherIncome + finIncome;
+
+    const warningDiv = document.getElementById(`spouse-${suffix}-income-warning`);
+    if (!warningDiv) return;
+
+    let warningHtml = '';
+    let hasWarning = false;
+
+    if (nonWageIncome > 20000000) {
+      hasWarning = true;
+      warningHtml += `<div>⚠️ <strong>소득월액보험료 부과 대상</strong>: 직장 건강보험 외 근로소득외 소득이 2,000만 원을 초과하여 추가 건강보험료(월액)가 부과될 수 있습니다. (초과분의 7.15% 추가 납부)</div>`;
+    }
+
+    const isWageOnly = (bizIncome === 0 && pension === 0 && otherIncome === 0 && finIncome === 0);
+    const depLimit = isWageOnly ? 50000000 : 34000000;
+    const totalIncomeForDep = salary + nonWageIncome;
+    if (totalIncomeForDep > depLimit) {
+      hasWarning = true;
+      warningHtml += `<div style="margin-top:4px;">❌ <strong>피부양자 자격 상실 위험</strong>: 종합소득 합산액(${totalIncomeForDep.toLocaleString()}원)이 피부양자 소득요건(${depLimit.toLocaleString()}원)을 초과하여 건강보험 피부양자 자격이 상실되고 지역가입자로 전환될 위험이 있습니다.</div>`;
+    }
+
+    if (hasWarning) {
+      warningDiv.style.display = 'block';
+      warningDiv.style.background = 'rgba(255, 107, 107, 0.08)';
+      warningDiv.style.border = '1px solid rgba(255, 107, 107, 0.2)';
+      warningDiv.style.color = '#ff6b6b';
+      warningDiv.style.borderRadius = '8px';
+      warningDiv.style.padding = '10px';
+      warningDiv.style.marginTop = '10px';
+      warningDiv.innerHTML = warningHtml;
+    } else {
+      warningDiv.style.display = 'none';
+    }
+  }
+
+  function validateIsaOption(spouse) {
+    const suffix = spouse === 'a' ? 'a' : 'b';
+    const salary = parseVal(`inc-${suffix}-salary`) || 0;
+    
+    // Check currently selected spouse in ISA target
+    const isaTarget = document.getElementById('isa-target')?.value || 'a';
+    if (isaTarget === suffix) {
+      const isaTypeSelect = document.getElementById('isa-type-select');
+      if (isaTypeSelect) {
+        const subOption = isaTypeSelect.querySelector('option[value="sub"]');
+        if (subOption) {
+          if (salary > 50000000) {
+            subOption.disabled = true;
+            if (isaTypeSelect.value === 'sub') {
+              isaTypeSelect.value = 'general';
+              // Trigger input event to update calculations
+              isaTypeSelect.dispatchEvent(new Event('change'));
+              
+              // Show notification
+              const resultContainer = document.getElementById('isa-opt-result');
+              if (resultContainer) {
+                resultContainer.style.display = 'block';
+                document.getElementById('isa-opt-content').innerHTML = `
+                  <div style="color:#ff6b6b; font-weight:bold; padding:8px; background:rgba(255,107,107,0.06); border-radius:6px; margin-bottom:8px;">
+                    ⚠️ 총급여 5,000만 원 초과로 서민형 ISA 가입이 불가하여 일반형으로 자동 조정되었습니다. (가족 프로필 연동)
+                  </div>
+                `;
+              }
+            }
+          } else {
+            subOption.disabled = false;
+          }
+        }
+      }
+    }
+  }
 
   // Sync Target Selectors
   const targetSelectors = [
@@ -823,6 +987,11 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(config.amount).value = baseAmount.value;
           }
         }
+      }
+      
+      // Dynamic validation of ISA when target spouse changes
+      if (config.id === 'isa-target') {
+        validateIsaOption(spouse);
       }
       
       // Trigger calculation
@@ -885,6 +1054,14 @@ document.addEventListener('DOMContentLoaded', () => {
           group.style.display = 'none';
         }
       });
+
+      // Sync with Stepper
+      let stepNum = 1;
+      if (targetGroup === 'profile-b') stepNum = 2;
+      if (targetGroup === 'profile-dep') stepNum = 3;
+      if (stepperCurrentStep !== stepNum) {
+        goToStep(stepNum);
+      }
     });
   });
 
@@ -2175,6 +2352,84 @@ document.addEventListener('DOMContentLoaded', () => {
     if (el) { el.addEventListener('input', debouncedGiftTimeline); el.addEventListener('change', debouncedGiftTimeline); }
   });
 
+  // Register warnings and sync
+  function initRealtimeWarningsAndSync() {
+    const spouses = ['a', 'b'];
+    
+    spouses.forEach(spouse => {
+      // Salary inputs change triggers sync, ISA validation, and warnings
+      const salaryEl = document.getElementById(`inc-${spouse}-salary`);
+      if (salaryEl) {
+        ['input', 'change'].forEach(evt => {
+          salaryEl.addEventListener(evt, () => {
+            syncDependentSalaries();
+            validateIsaOption(spouse);
+            checkSpouseIncomeWarnings(spouse);
+          });
+        });
+      }
+      
+      // Other income inputs change triggers warnings
+      const incomeFields = [
+        `inc-${spouse}-business-revenue`,
+        `inc-${spouse}-business-expense`,
+        `inc-${spouse}-pension-income`,
+        `inc-${spouse}-other-revenue`,
+        `inc-${spouse}-other-expense`,
+        `inc-${spouse}-financial-gen`,
+        `inc-${spouse}-financial-overseas`
+      ];
+      
+      incomeFields.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+          ['input', 'change'].forEach(evt => {
+            el.addEventListener(evt, () => {
+              checkSpouseIncomeWarnings(spouse);
+            });
+          });
+        }
+      });
+    });
+
+    // Also run validation and warnings initially
+    syncDependentSalaries();
+    validateIsaOption('a');
+    validateIsaOption('b');
+    checkSpouseIncomeWarnings('a');
+    checkSpouseIncomeWarnings('b');
+
+    // Register click handlers for profile edit buttons beside readonly inputs
+    document.querySelectorAll('.btn-edit-profile-salary').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        // Go to tab-profile
+        const profileTabBtn = document.querySelector('.tab-btn[data-tab="profile"]');
+        if (profileTabBtn) profileTabBtn.click();
+        
+        // Get target spouse ('a' or 'b')
+        const targetSelId = btn.dataset.spouseId;
+        const targetSel = document.getElementById(targetSelId);
+        const spouse = targetSel ? targetSel.value : 'a';
+        
+        // Sync with stepper step & segmented control
+        const stepNum = spouse === 'a' ? 1 : 2;
+        goToStep(stepNum);
+        
+        // Focus and select input
+        const salaryInput = document.getElementById(`inc-${spouse}-salary`);
+        if (salaryInput) {
+          salaryInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          setTimeout(() => {
+            salaryInput.focus();
+            salaryInput.select();
+          }, 300);
+        }
+      });
+    });
+  }
+
   // 아코디언 초기화
   initAccordion();
 
@@ -2182,6 +2437,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initStepSections();
   goToStep(1);
   updateInputProgress();
+  initRealtimeWarningsAndSync();
 
   // 접근성: 툴팁에 role/tabindex 부여 및 aria-describedby 연결
   document.querySelectorAll('.tooltip-icon').forEach((tip, idx) => {
