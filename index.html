@@ -114,7 +114,7 @@
 <input class="form-input money-input" id="inc-a-card" inputmode="numeric" type="text" value=""/>
 </div>
 
-<button type="button" class="btn-toggle-advanced" style="width:100%; padding:10px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); color:var(--accent-info); font-size:0.85rem; border-radius:8px; cursor:pointer; margin-bottom:1rem; transition:var(--transition-smooth);">➕ 사업/금융/기타 소득 및 추가 공제 펼치기 ▼</button>
+<button type="button" class="btn-toggle-advanced" data-label-type="income" style="width:100%; padding:10px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); color:var(--accent-info); font-size:0.85rem; border-radius:8px; cursor:pointer; margin-bottom:1rem; transition:var(--transition-smooth);">➕ 사업·금융·기타 소득 펼치기 ▼</button>
 
 <div class="advanced-fields-wrapper" style="display:none;">
 <div class="grid-2col" style="gap:5px;">
@@ -142,6 +142,11 @@
   <input class="form-input money-input" id="inc-a-other-expense" inputmode="numeric" type="text" value="0"/>
 </div>
 
+</div><!-- /advanced-fields-wrapper (Income) -->
+
+<button type="button" class="btn-toggle-advanced" data-label-type="deduction" style="width:100%; padding:10px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); color:var(--accent-gold); font-size:0.85rem; border-radius:8px; cursor:pointer; margin-bottom:1rem; transition:var(--transition-smooth);">➕ 추가 공제 항목 펼치기 ▼</button>
+
+<div class="advanced-fields-wrapper" style="display:none; margin-bottom:1rem;">
 <div class="form-group">
 <label>노란우산공제 납입 <span class="tooltip-icon" data-tooltip="소기업·소상공인 공제(노란우산) 연간 납입액입니다. 500만 원 한도 내에서 소득공제됩니다.">?</span></label>
 <input class="form-input money-input" id="inc-a-yellow" inputmode="numeric" type="text" value=""/>
@@ -225,7 +230,7 @@
 <input class="form-input money-input" id="inc-b-card" inputmode="numeric" type="text" value=""/>
 </div>
 
-<button type="button" class="btn-toggle-advanced" style="width:100%; padding:10px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); color:var(--accent-info); font-size:0.85rem; border-radius:8px; cursor:pointer; margin-bottom:1rem; transition:var(--transition-smooth);">➕ 사업/금융/기타 소득 및 추가 공제 펼치기 ▼</button>
+<button type="button" class="btn-toggle-advanced" data-label-type="income" style="width:100%; padding:10px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); color:var(--accent-info); font-size:0.85rem; border-radius:8px; cursor:pointer; margin-bottom:1rem; transition:var(--transition-smooth);">➕ 사업·금융·기타 소득 펼치기 ▼</button>
 
 <div class="advanced-fields-wrapper" style="display:none;">
 <div class="grid-2col" style="gap:5px;">
@@ -253,6 +258,11 @@
   <input class="form-input money-input" id="inc-b-other-expense" inputmode="numeric" type="text" value="0"/>
 </div>
 
+</div><!-- /advanced-fields-wrapper (Income) -->
+
+<button type="button" class="btn-toggle-advanced" data-label-type="deduction" style="width:100%; padding:10px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); color:var(--accent-gold); font-size:0.85rem; border-radius:8px; cursor:pointer; margin-bottom:1rem; transition:var(--transition-smooth);">➕ 추가 공제 항목 펼치기 ▼</button>
+
+<div class="advanced-fields-wrapper" style="display:none; margin-bottom:1rem;">
 <div class="form-group">
 <label>노란우산공제 납입 <span class="tooltip-icon" data-tooltip="소기업·소상공인 공제(노란우산) 연간 납입액입니다. 500만 원 한도 내에서 소득공제됩니다.">?</span></label>
 <input class="form-input money-input" id="inc-b-yellow" inputmode="numeric" type="text" value=""/>

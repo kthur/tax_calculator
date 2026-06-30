@@ -45,7 +45,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (wrapper && wrapper.classList.contains('advanced-fields-wrapper')) {
           const isHidden = wrapper.style.display === 'none';
           wrapper.style.display = isHidden ? 'block' : 'none';
-          e.target.innerHTML = isHidden ? '➖ 사업/금융/기타 소득 및 추가 공제 접기 ▲' : '➕ 사업/금융/기타 소득 및 추가 공제 펼치기 ▼';
+          
+          const labelType = btn.dataset.labelType;
+          if (labelType === 'income') {
+            e.target.innerHTML = isHidden ? '➖ 사업·금융·기타 소득 접기 ▲' : '➕ 사업·금융·기타 소득 펼치기 ▼';
+          } else if (labelType === 'deduction') {
+            e.target.innerHTML = isHidden ? '➖ 추가 공제 항목 접기 ▲' : '➕ 추가 공제 항목 펼치기 ▼';
+          } else {
+            e.target.innerHTML = isHidden ? '➖ 접기 ▲' : '➕ 펼치기 ▼';
+          }
         }
       });
     });
