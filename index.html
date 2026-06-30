@@ -46,69 +46,68 @@
 </header>
 <!-- Navigation Tabs (Bottom Nav Style) -->
 <nav aria-label="메인 메뉴" class="tab-navigation" role="tablist">
-<button aria-controls="tab-profile" aria-selected="true" class="tab-btn active" data-tab="profile" role="tab">👤 가족 프로필</button>
-<button aria-controls="tab-income" aria-selected="false" class="tab-btn" data-tab="income" role="tab">📊 소득세·연말정산</button>
-<button aria-controls="tab-business" aria-selected="false" class="tab-btn" data-tab="business" role="tab">🏢 사업·자산</button>
-<button aria-controls="tab-capital" aria-selected="false" class="tab-btn" data-tab="capital" role="tab">🏠 양도·증여·상속</button>
+<button aria-controls="tab-profile" aria-selected="true" class="tab-btn active" data-tab="profile" role="tab">👤 정보 입력</button>
+<button aria-controls="tab-optimize" aria-selected="false" class="tab-btn" data-tab="optimize" role="tab">🎯 최적화 도구</button>
 <button aria-controls="tab-report" aria-selected="false" class="tab-btn" data-tab="report" role="tab">🏆 통합 리포트</button>
+<button aria-controls="tab-capital" aria-selected="false" class="tab-btn" data-tab="capital" role="tab">🏠 양도·증여</button>
 </nav>
 <!-- ==================== 1. 종합소득세 대분류 탭 ==================== -->
 <section aria-label="가족 프로필" class="calculator-panel active" id="tab-profile" role="tabpanel">
 <!-- Left Area: 통합 입력 폼 -->
 <div class="input-card">
-<h2 class="card-title">👤 가족 프로필 (통합 입력)</h2>
-<!-- 진행률 표시줄 -->
-<div class="stepper-container">
-  <div class="stepper-step active" data-step="1">
-    <span class="stepper-dot">1</span>
-    <span class="stepper-label">배우자 A</span>
+<h2 class="card-title">👤 정보 입력</h2>
+
+<!-- 🆕 UX 개선: 온보딩 스플릿 뷰 -->
+<div id="onboarding-container" style="display:flex; flex-direction:column; gap:1.5rem; margin-top:1rem;">
+  <div style="text-align:center; margin-bottom:1rem;">
+    <h3 style="font-size:1.2rem; margin-bottom:8px;">어떻게 입력할까요?</h3>
+    <p style="font-size:0.9rem; color:var(--text-secondary-dark);">가장 편한 방식을 선택해 주세요.</p>
   </div>
-  <div class="stepper-connector"></div>
-  <div class="stepper-step" data-step="2">
-    <span class="stepper-dot">2</span>
-    <span class="stepper-label">배우자 B</span>
-  </div>
-  <div class="stepper-connector"></div>
-  <div class="stepper-step" data-step="3">
-    <span class="stepper-dot">3</span>
-    <span class="stepper-label">부양가족</span>
+  <div class="grid-2col" style="display:grid; gap:1rem;">
+    <button id="btn-ob-pdf" class="btn-primary" style="padding:2rem 1rem; border-radius:16px; background:linear-gradient(135deg, var(--accent-primary), #8B5CF6); box-shadow:0 8px 16px rgba(108,99,255,0.3); transition:transform 0.3s, box-shadow 0.3s; display:flex; flex-direction:column; align-items:center; gap:10px;">
+      <span style="font-size:2rem;">📄</span>
+      <span style="font-size:1.1rem; font-weight:800;">홈택스 PDF 자동 완성</span>
+      <span style="font-size:0.8rem; font-weight:400; opacity:0.9;">1초 만에 모든 정보 입력 (추천)</span>
+    </button>
+    <button id="btn-ob-manual" style="padding:2rem 1rem; border-radius:16px; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--text-primary-dark); cursor:pointer; transition:background 0.3s; display:flex; flex-direction:column; align-items:center; gap:10px;">
+      <span style="font-size:2rem;">✍️</span>
+      <span style="font-size:1.1rem; font-weight:800;">하나씩 직접 입력하기</span>
+      <span style="font-size:0.8rem; font-weight:400; opacity:0.7;">소득 정보를 직접 타이핑합니다</span>
+    </button>
   </div>
 </div>
+
+<!-- 수동 입력 폼 래퍼 (초기엔 숨김) -->
+<div id="manual-input-container" style="display:none; margin-top:1rem;">
 
 <!-- 📄 홈택스 PDF 드롭존 토글 버튼 및 영역 -->
 
-<div class="segment-control-wrapper profile-segment-wrapper" style="display:none;">
-<button class="segment-btn active" data-segment="profile-a" type="button">배우자 A</button>
+<div class="segment-control-wrapper profile-segment-wrapper" style="display:flex; margin-bottom:1.5rem;">
+<button class="segment-btn active" data-segment="profile-a" type="button" style="background:var(--accent-primary); color:#fff;">배우자 A</button>
 <button class="segment-btn" data-segment="profile-b" type="button">배우자 B</button>
 <button class="segment-btn" data-segment="profile-dep" type="button">부양가족</button>
 </div>
-<div class="pdf-dropzone" id="pdf-dropzone" style="transition:max-height 0.3s ease; overflow:hidden; margin-top: 0.5rem;">
-<div class="pdf-dropzone-content">
-<span class="pdf-dropzone-icon">📄</span>
-<h3>홈택스 PDF로 자동 입력</h3>
-<p>종합소득세 신고서 또는 연말정산 간소화 PDF를 여기에 끌어다 놓으세요.</p>
-<label class="pdf-upload-btn" for="pdf-file-input">파일 선택하기</label>
 <input accept=".pdf" id="pdf-file-input" style="display:none;" type="file"/>
-</div>
-<div id="pdf-status" style="display:none; margin-top:8px; font-size:0.82rem;"></div>
-</div>
-<!-- 부부 소득 및 개별 금융소득 입력 영역 -->
+<div id="pdf-status" style="display:none; margin-top:8px; font-size:0.82rem; text-align:center;"></div>
+
 <!-- 🆕 모바일 전용 배우자 내부 탭 스위치 -->
 
 <div class="" style="margin-bottom:1.5rem;">
 <!-- 배우자 A 입력 영역 -->
-<div class="spouse-container-box active profile-segment-group" data-group="profile-a" id="spouse-a-container" style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05); display:block;">
-<div class="step-section-header" data-target="spouse-a-body" style="cursor:pointer; user-select:none;">
-<h4 style="font-size:0.9rem; color:var(--accent-primary); margin-bottom:0; font-weight:700; display:flex; align-items:center; justify-content:space-between;">
-<span>📌 1단계: 배우자 A - 소득·공제 통합</span>
-<span style="font-size:0.7rem; opacity:0.5;">▲</span>
-</h4>
-</div>
+<div class="spouse-container-box active profile-segment-group" data-group="profile-a" id="spouse-a-container" style="display:block;">
 <div class="step-section-body" id="spouse-a-body" style="display:block;">
 <div class="form-group">
 <label>근로소득 (총급여) <span class="tooltip-icon" data-tooltip="연간 총 근로소득(총급여액)입니다.">?</span></label>
 <input class="form-input money-input" id="inc-a-salary" inputmode="numeric" type="text" value=""/>
 </div>
+<div class="form-group">
+<label>신용카드 사용액 <span class="tooltip-icon" data-tooltip="본인 명의 신용카드/체크카드 연간 사용액입니다. 총급여의 25% 초과분부터 소득공제가 적용됩니다.">?</span></label>
+<input class="form-input money-input" id="inc-a-card" inputmode="numeric" type="text" value=""/>
+</div>
+
+<button type="button" class="btn-toggle-advanced" style="width:100%; padding:10px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); color:var(--accent-info); font-size:0.85rem; border-radius:8px; cursor:pointer; margin-bottom:1rem; transition:var(--transition-smooth);">➕ 사업/금융/기타 소득 및 추가 공제 펼치기 ▼</button>
+
+<div class="advanced-fields-wrapper" style="display:none;">
 <div class="grid-2col" style="gap:5px;">
   <div class="form-group">
     <label style="font-size:0.75rem;">사업소득 총수입(매출) <span class="tooltip-icon" data-tooltip="연간 총 사업 매출액입니다.">?</span></label>
@@ -133,10 +132,7 @@
   <label>기타소득 필요경비 <span class="tooltip-icon" data-tooltip="기타소득을 위해 소요된 필요경비입니다.">?</span></label>
   <input class="form-input money-input" id="inc-a-other-expense" inputmode="numeric" type="text" value="0"/>
 </div>
-<div class="form-group">
-<label>신용카드 사용액 <span class="tooltip-icon" data-tooltip="본인 명의 신용카드/체크카드 연간 사용액입니다. 총급여의 25% 초과분부터 소득공제가 적용됩니다.">?</span></label>
-<input class="form-input money-input" id="inc-a-card" inputmode="numeric" type="text" value=""/>
-</div>
+
 <div class="form-group">
 <label>노란우산공제 납입 <span class="tooltip-icon" data-tooltip="소기업·소상공인 공제(노란우산) 연간 납입액입니다. 500만 원 한도 내에서 소득공제됩니다.">?</span></label>
 <input class="form-input money-input" id="inc-a-yellow" inputmode="numeric" type="text" value=""/>
@@ -198,6 +194,7 @@
 <label style="font-size:0.7rem;">전세대출 원리금상환액 <span class="tooltip-icon" data-tooltip="전세자금대출의 연간 원리금 상환액입니다. 주택 마련 공제 대상입니다.">?</span></label>
 <input class="form-input money-input" id="inc-a-housing-loan" inputmode="numeric" style="padding:6px; font-size:0.8rem;" type="text" value=""/>
 </div>
+</div><!-- /advanced-fields-wrapper -->
 </div>
 <div class="tax-danger-alert" id="spouse-a-income-warning" style="display:none; margin-top:10px; padding:10px; border-radius:8px; font-size:0.8rem; line-height:1.5;"></div>
 </div><!-- /spouse-a-body -->
@@ -214,6 +211,14 @@
 <label>근로소득 (총급여) <span class="tooltip-icon" data-tooltip="연간 총 근로소득(총급여액)입니다.">?</span></label>
 <input class="form-input money-input" id="inc-b-salary" inputmode="numeric" type="text" value=""/>
 </div>
+<div class="form-group">
+<label>신용카드 사용액 <span class="tooltip-icon" data-tooltip="본인 명의 신용카드/체크카드 연간 사용액입니다. 총급여의 25% 초과분부터 소득공제가 적용됩니다.">?</span></label>
+<input class="form-input money-input" id="inc-b-card" inputmode="numeric" type="text" value=""/>
+</div>
+
+<button type="button" class="btn-toggle-advanced" style="width:100%; padding:10px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); color:var(--accent-info); font-size:0.85rem; border-radius:8px; cursor:pointer; margin-bottom:1rem; transition:var(--transition-smooth);">➕ 사업/금융/기타 소득 및 추가 공제 펼치기 ▼</button>
+
+<div class="advanced-fields-wrapper" style="display:none;">
 <div class="grid-2col" style="gap:5px;">
   <div class="form-group">
     <label style="font-size:0.75rem;">사업소득 총수입(매출) <span class="tooltip-icon" data-tooltip="연간 총 사업 매출액입니다.">?</span></label>
@@ -238,10 +243,7 @@
   <label>기타소득 필요경비 <span class="tooltip-icon" data-tooltip="기타소득을 위해 소요된 필요경비입니다.">?</span></label>
   <input class="form-input money-input" id="inc-b-other-expense" inputmode="numeric" type="text" value="0"/>
 </div>
-<div class="form-group">
-<label>신용카드 사용액 <span class="tooltip-icon" data-tooltip="본인 명의 신용카드/체크카드 연간 사용액입니다. 총급여의 25% 초과분부터 소득공제가 적용됩니다.">?</span></label>
-<input class="form-input money-input" id="inc-b-card" inputmode="numeric" type="text" value=""/>
-</div>
+
 <div class="form-group">
 <label>노란우산공제 납입 <span class="tooltip-icon" data-tooltip="소기업·소상공인 공제(노란우산) 연간 납입액입니다. 500만 원 한도 내에서 소득공제됩니다.">?</span></label>
 <input class="form-input money-input" id="inc-b-yellow" inputmode="numeric" type="text" value=""/>
@@ -374,6 +376,7 @@
 <button class="btn-add-person" id="btn-add-couple-dep" style="display:none; margin-top:0;">➕ 부양가족 추가</button>
 <button class="btn-primary" id="btn-calc-income-integrated" style="margin-top:0; display:none;">🎯 원스톱 절세 계산 &amp; 시뮬레이션</button>
 </div>
+</div><!-- /manual-input-container -->
 </div>
 <!-- Right Area: 통합 절세 리포트 출력 -->
 
@@ -382,130 +385,9 @@
 <!-- 💳 신용카드 vs 체크카드 황금비율 계산기 -->
 
 </div></section> <!-- end tab-income -->
-<!-- ==================== 2. 부가세/경비율 대분류 탭 ==================== -->
+<!-- ==================== 2. 최적화 도구 탭 ==================== -->
+<section aria-label="최적화 도구" class="calculator-panel" id="tab-optimize" role="tabpanel">
 
-<section aria-label="소득세/연말정산" class="calculator-panel" id="tab-income" role="tabpanel">
-<div class="result-card" id="inc-result-card">
-<div class="breadcrumb" id="breadcrumb">
-<span class="breadcrumb-item active">TAX NAVI</span>
-<span class="breadcrumb-sep">›</span>
-<span class="breadcrumb-item active">소득·연말</span>
-</div>
-<h2 class="card-title">🏆 종합 절세 통합 리포트</h2>
-<div class="calc-status idle" id="calc-status-income"><span class="calc-spinner"></span>계산 중...</div>
-<div class="empty-state" id="res-report-empty">
-<span class="empty-icon">📊</span>
-          입력값을 수정하면 실시간으로 리포트가 업데이트됩니다
-        </div>
-<!-- 맞벌이 연말정산 최적 몰아주기 배정안 -->
-<div id="res-couple-ye-container" style="background:rgba(0,212,170,0.1); padding:1rem; border-radius:8px; border-left:4px solid var(--accent-secondary); margin-bottom:1.5rem;">
-<h4 style="font-weight:700; margin-bottom:5px;">🎯 맞벌이 부부 부양가족 배정 최적안</h4>
-<p id="res-couple-ye-desc" style="font-size:0.85rem; line-height:1.4;"></p>
-<!-- Visual Comparison Bar Chart -->
-<div id="visual-tax-comparison" style="margin-top: 15px; background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px;">
-<h5 style="margin: 0 0 10px 0; font-size: 0.85rem; font-weight: bold; color: #fff;">📊 세액 절감 시각화 (Worst Case vs 최적화)</h5>
-<div style="margin-bottom: 12px;">
-<div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 4px; color: #aaa;">
-<span>단독 몰아주기 (Worst Case)</span>
-<span id="comp-worst-val" style="font-weight: bold; color: #ff6b6b;">0 원</span>
-</div>
-<div style="background: rgba(255, 255, 255, 0.1); height: 10px; border-radius: 5px; overflow: hidden; position: relative;">
-<div id="comp-worst-bar" style="background: #ff6b6b; width: 100%; height: 100%; transition: width 0.5s ease-in-out;"></div>
-</div>
-</div>
-<div>
-<div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 4px; color: #aaa;">
-<span>TAX NAVI 최적화 배정</span>
-<span id="comp-opt-val" style="font-weight: bold; color: #2ec4b6;">0 원</span>
-</div>
-<div style="background: rgba(255, 255, 255, 0.1); height: 10px; border-radius: 5px; overflow: hidden; position: relative;">
-<div id="comp-opt-bar" style="background: #2ec4b6; width: 0%; height: 100%; transition: width 0.5s ease-in-out;"></div>
-</div>
-</div>
-<div style="margin-top: 10px; text-align: right; font-size: 0.8rem; font-weight: bold; color: #2ec4b6;">
-              💰 절감액: <span id="comp-savings-val">0 원</span>
-</div>
-</div>
-</div>
-<!-- 💳 소비 네비게이션 -->
-<div class="accordion-section" id="acc-card-nav" style="display:none;">
-<div class="accordion-header">💳 연말 소비 네비게이션</div>
-<div class="accordion-body" id="acc-body-card-nav">
-<div id="res-card-nav-content" style="font-size:0.82rem; line-height:1.5;"></div>
-</div>
-</div>
-<!-- 🏥 의료비 몰아주기 시각화 -->
-<div class="accordion-section" id="acc-medical" style="display:none;">
-<div class="accordion-header">🏥 의료비 몰아주기 비교</div>
-<div class="accordion-body" id="acc-body-medical">
-<div id="res-medical-chart" style="display:flex; gap:15px; align-items:flex-end; margin-top:8px;">
-<div style="flex:1; text-align:center;">
-<div style="font-size:0.75rem; margin-bottom:4px; color:var(--accent-primary);">배우자 A 청구</div>
-<div style="background:rgba(255,255,255,0.08); height:8px; border-radius:4px; overflow:hidden;">
-<div id="med-bar-a" style="background:var(--accent-primary); width:50%; height:100%; transition:width 0.5s;"></div>
-</div>
-<div id="med-tax-a" style="font-size:0.78rem; font-weight:bold; margin-top:4px;">0 원</div>
-</div>
-<div style="flex:1; text-align:center;">
-<div style="font-size:0.75rem; margin-bottom:4px; color:var(--accent-secondary);">배우자 B 청구</div>
-<div style="background:rgba(255,255,255,0.08); height:8px; border-radius:4px; overflow:hidden;">
-<div id="med-bar-b" style="background:var(--accent-secondary); width:50%; height:100%; transition:width 0.5s;"></div>
-</div>
-<div id="med-tax-b" style="font-size:0.78rem; font-weight:bold; margin-top:4px;">0 원</div>
-</div>
-</div>
-<div id="res-medical-desc" style="font-size:0.78rem; margin-top:8px; opacity:0.8;"></div>
-</div>
-</div>
-<!-- 📋 가족 통합 리포트 요약 -->
-
-<!-- 개별 결정세액 리포트 + 금융소득 -->
-<div class="accordion-section" id="acc-individual">
-<div class="accordion-header">👤 개인별 세부 리포트</div>
-<div class="accordion-body" id="acc-body-individual">
-<div class="grid-2col" style="display:grid; gap:15px; margin-bottom:1rem;">
-<div style="background:rgba(108,99,255,0.05); padding:12px; border-radius:8px;">
-<h4 style="font-size:0.9rem; color:var(--accent-primary); margin-bottom:5px; font-weight:700;">배우자 A 세금 리포트</h4>
-<div style="font-size:0.85rem; display:flex; flex-direction:column; gap:4px;">
-<div>소득공제(근로소득공제/필요경비): <span id="res-a-expense" style="font-weight:bold;">0원</span></div>
-<div>인적공제(본인/부양가족): <span id="res-a-person" style="font-weight:bold;">0원</span></div>
-<div>과세표준: <span id="res-a-taxable" style="font-weight:bold;">0원</span></div>
-<div>세율구간: <span id="res-a-rate" style="font-weight:bold;">0%</span></div>
-<div>결정세액: <span id="res-a-total" style="font-weight:bold; color:var(--accent-primary);">0원</span></div>
-</div>
-</div>
-<div style="background:rgba(0,212,170,0.05); padding:12px; border-radius:8px;">
-<h4 style="font-size:0.9rem; color:var(--accent-secondary); margin-bottom:5px; font-weight:700;">배우자 B 세금 리포트</h4>
-<div style="font-size:0.85rem; display:flex; flex-direction:column; gap:4px;">
-<div>소득공제(근로소득공제/필요경비): <span id="res-b-expense" style="font-weight:bold;">0원</span></div>
-<div>인적공제(본인/부양가족): <span id="res-b-person" style="font-weight:bold;">0원</span></div>
-<div>과세표준: <span id="res-b-taxable" style="font-weight:bold;">0원</span></div>
-<div>세율구간: <span id="res-b-rate" style="font-weight:bold;">0%</span></div>
-<div>결정세액: <span id="res-b-total" style="font-weight:bold; color:var(--accent-secondary);">0원</span></div>
-</div>
-</div>
-</div>
-<div class="grid-2col" style="display:grid; gap:15px;">
-<div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; font-size:0.85rem;">
-<h4 style="font-weight:700; color:var(--accent-primary); margin-bottom:6px;">배우자 A 금융소득 결과</h4>
-<div>ISA 비과세액: <span id="res-a-isa-free">0 원</span></div>
-<div>ISA 분리세(9.9%): <span id="res-a-isa-tax">0 원</span></div>
-<div>채권 분리세(30%): <span id="res-a-bond-tax">0 원</span></div>
-<div>종합과세합산 금융소득: <span id="res-a-financial-comp">0 원</span></div>
-</div>
-<div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; font-size:0.85rem;">
-<h4 style="font-weight:700; color:var(--accent-secondary); margin-bottom:6px;">배우자 B 금융소득 결과</h4>
-<div>ISA 비과세액: <span id="res-b-isa-free">0 원</span></div>
-<div>ISA 분리세(9.9%): <span id="res-b-isa-tax">0 원</span></div>
-<div>채권 분리세(30%): <span id="res-b-bond-tax">0 원</span></div>
-<div>종합과세합산 금융소득: <span id="res-b-financial-comp">0 원</span></div>
-</div>
-</div>
-</div>
-</div>
-<!-- AI 절세 개선 추천 카드 리스트 -->
-
-</div>
 <!-- 🆕 P1-2: 독립 계산기 섹션 구분선 -->
 <div class="section-divider" style="grid-column: 1 / -1; margin: 1rem 0; text-align: center;">
   <span style="display:inline-block; padding: 4px 16px; font-size:0.72rem; font-weight:700; color:var(--accent-secondary); border:1px solid rgba(0,212,170,0.2); border-radius:20px; background:rgba(0,212,170,0.06); letter-spacing:0.5px;">
@@ -654,8 +536,7 @@
 </div>
 </div>
 </div></section>
-<section aria-label="부가세/경비율" class="calculator-panel" id="tab-business" role="tabpanel"><div class="input-card" style="grid-column: 1 / -1; margin-top: 1.5rem;">
-<h2 class="card-title">💰 ISA 최적화 (2026년 개편: 납입한도 2배, 국내투자형)</h2>
+<!-- Removed tab-business wrapper here -->
 <div class="grid-2col" style="display:grid; gap:1.5rem;">
 <div>
 
@@ -1109,8 +990,121 @@
 </div>
 </section>
 <section aria-label="통합 리포트" class="calculator-panel" id="tab-report" role="tabpanel">
+<div class="result-card" id="inc-result-card">
+<h2 class="card-title">🏆 통합 절세 리포트 (상세 내역)</h2>
+<div class="calc-status idle" id="calc-status-income"><span class="calc-spinner"></span>계산 중...</div>
+<div class="empty-state" id="res-report-empty">
+<span class="empty-icon">📊</span>
+          입력값을 수정하면 실시간으로 리포트가 업데이트됩니다
+        </div>
+<!-- 맞벌이 연말정산 최적 몰아주기 배정안 -->
+<div id="res-couple-ye-container" style="background:rgba(0,212,170,0.1); padding:1rem; border-radius:8px; border-left:4px solid var(--accent-secondary); margin-bottom:1.5rem;">
+<h4 style="font-weight:700; margin-bottom:5px;">🎯 맞벌이 부부 부양가족 배정 최적안</h4>
+<p id="res-couple-ye-desc" style="font-size:0.85rem; line-height:1.4;"></p>
+<!-- Visual Comparison Bar Chart -->
+<div id="visual-tax-comparison" style="margin-top: 15px; background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px;">
+<h5 style="margin: 0 0 10px 0; font-size: 0.85rem; font-weight: bold; color: #fff;">📊 세액 절감 시각화 (Worst Case vs 최적화)</h5>
+<div style="margin-bottom: 12px;">
+<div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 4px; color: #aaa;">
+<span>단독 몰아주기 (Worst Case)</span>
+<span id="comp-worst-val" style="font-weight: bold; color: #ff6b6b;">0 원</span>
+</div>
+<div style="background: rgba(255, 255, 255, 0.1); height: 10px; border-radius: 5px; overflow: hidden; position: relative;">
+<div id="comp-worst-bar" style="background: #ff6b6b; width: 100%; height: 100%; transition: width 0.5s ease-in-out;"></div>
+</div>
+</div>
+<div>
+<div style="display: flex; justify-content: space-between; font-size: 0.75rem; margin-bottom: 4px; color: #aaa;">
+<span>TAX NAVI 최적화 배정</span>
+<span id="comp-opt-val" style="font-weight: bold; color: #2ec4b6;">0 원</span>
+</div>
+<div style="background: rgba(255, 255, 255, 0.1); height: 10px; border-radius: 5px; overflow: hidden; position: relative;">
+<div id="comp-opt-bar" style="background: #2ec4b6; width: 0%; height: 100%; transition: width 0.5s ease-in-out;"></div>
+</div>
+</div>
+<div style="margin-top: 10px; text-align: right; font-size: 0.8rem; font-weight: bold; color: #2ec4b6;">
+              💰 절감액: <span id="comp-savings-val">0 원</span>
+</div>
+</div>
+</div>
+<!-- 💳 소비 네비게이션 -->
+<div class="accordion-section" id="acc-card-nav" style="display:none;">
+<div class="accordion-header">💳 연말 소비 네비게이션</div>
+<div class="accordion-body" id="acc-body-card-nav">
+<div id="res-card-nav-content" style="font-size:0.82rem; line-height:1.5;"></div>
+</div>
+</div>
+<!-- 🏥 의료비 몰아주기 시각화 -->
+<div class="accordion-section" id="acc-medical" style="display:none;">
+<div class="accordion-header">🏥 의료비 몰아주기 비교</div>
+<div class="accordion-body" id="acc-body-medical">
+<div id="res-medical-chart" style="display:flex; gap:15px; align-items:flex-end; margin-top:8px;">
+<div style="flex:1; text-align:center;">
+<div style="font-size:0.75rem; margin-bottom:4px; color:var(--accent-primary);">배우자 A 청구</div>
+<div style="background:rgba(255,255,255,0.08); height:8px; border-radius:4px; overflow:hidden;">
+<div id="med-bar-a" style="background:var(--accent-primary); width:50%; height:100%; transition:width 0.5s;"></div>
+</div>
+<div id="med-tax-a" style="font-size:0.78rem; font-weight:bold; margin-top:4px;">0 원</div>
+</div>
+<div style="flex:1; text-align:center;">
+<div style="font-size:0.75rem; margin-bottom:4px; color:var(--accent-secondary);">배우자 B 청구</div>
+<div style="background:rgba(255,255,255,0.08); height:8px; border-radius:4px; overflow:hidden;">
+<div id="med-bar-b" style="background:var(--accent-secondary); width:50%; height:100%; transition:width 0.5s;"></div>
+</div>
+<div id="med-tax-b" style="font-size:0.78rem; font-weight:bold; margin-top:4px;">0 원</div>
+</div>
+</div>
+<div id="res-medical-desc" style="font-size:0.78rem; margin-top:8px; opacity:0.8;"></div>
+</div>
+</div>
+
+<!-- 개별 결정세액 리포트 + 금융소득 -->
+<div class="accordion-section" id="acc-individual">
+<div class="accordion-header">👤 개인별 세부 리포트</div>
+<div class="accordion-body" id="acc-body-individual">
+<div class="grid-2col" style="display:grid; gap:15px; margin-bottom:1rem;">
+<div style="background:rgba(108,99,255,0.05); padding:12px; border-radius:8px;">
+<h4 style="font-size:0.9rem; color:var(--accent-primary); margin-bottom:5px; font-weight:700;">배우자 A 세금 리포트</h4>
+<div style="font-size:0.85rem; display:flex; flex-direction:column; gap:4px;">
+<div>소득공제(근로소득공제/필요경비): <span id="res-a-expense" style="font-weight:bold;">0원</span></div>
+<div>인적공제(본인/부양가족): <span id="res-a-person" style="font-weight:bold;">0원</span></div>
+<div>과세표준: <span id="res-a-taxable" style="font-weight:bold;">0원</span></div>
+<div>세율구간: <span id="res-a-rate" style="font-weight:bold;">0%</span></div>
+<div>결정세액: <span id="res-a-total" style="font-weight:bold; color:var(--accent-primary);">0원</span></div>
+</div>
+</div>
+<div style="background:rgba(0,212,170,0.05); padding:12px; border-radius:8px;">
+<h4 style="font-size:0.9rem; color:var(--accent-secondary); margin-bottom:5px; font-weight:700;">배우자 B 세금 리포트</h4>
+<div style="font-size:0.85rem; display:flex; flex-direction:column; gap:4px;">
+<div>소득공제(근로소득공제/필요경비): <span id="res-b-expense" style="font-weight:bold;">0원</span></div>
+<div>인적공제(본인/부양가족): <span id="res-b-person" style="font-weight:bold;">0원</span></div>
+<div>과세표준: <span id="res-b-taxable" style="font-weight:bold;">0원</span></div>
+<div>세율구간: <span id="res-b-rate" style="font-weight:bold;">0%</span></div>
+<div>결정세액: <span id="res-b-total" style="font-weight:bold; color:var(--accent-secondary);">0원</span></div>
+</div>
+</div>
+</div>
+<div class="grid-2col" style="display:grid; gap:15px;">
+<div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; font-size:0.85rem;">
+<h4 style="font-weight:700; color:var(--accent-primary); margin-bottom:6px;">배우자 A 금융소득 결과</h4>
+<div>ISA 비과세액: <span id="res-a-isa-free">0 원</span></div>
+<div>ISA 분리세(9.9%): <span id="res-a-isa-tax">0 원</span></div>
+<div>채권 분리세(30%): <span id="res-a-bond-tax">0 원</span></div>
+<div>종합과세합산 금융소득: <span id="res-a-financial-comp">0 원</span></div>
+</div>
+<div style="background:rgba(255,255,255,0.02); padding:12px; border-radius:8px; font-size:0.85rem;">
+<h4 style="font-weight:700; color:var(--accent-secondary); margin-bottom:6px;">배우자 B 금융소득 결과</h4>
+<div>ISA 비과세액: <span id="res-b-isa-free">0 원</span></div>
+<div>ISA 분리세(9.9%): <span id="res-b-isa-tax">0 원</span></div>
+<div>채권 분리세(30%): <span id="res-b-bond-tax">0 원</span></div>
+<div>종합과세합산 금융소득: <span id="res-b-financial-comp">0 원</span></div>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div class="result-card" id="report-main-card">
-<h2 class="card-title">🏆 통합 절세 리포트</h2>
+<h2 class="card-title">👨‍👩‍👧 우리 가족 요약 브리핑</h2>
 <div class="accordion-section" id="acc-family" style="display:block;">
 <div class="accordion-header">📋 우리 가족 절세 통합 리포트</div>
 <div class="accordion-body" id="acc-body-family">

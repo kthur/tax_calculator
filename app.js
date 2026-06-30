@@ -14,6 +14,46 @@ function debounce(fn, delay = 400) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  // 1. 온보딩 스플릿 뷰 초기화
+  const initOnboarding = () => {
+    const btnPdf = document.getElementById('btn-ob-pdf');
+    const btnManual = document.getElementById('btn-ob-manual');
+    const onboardingContainer = document.getElementById('onboarding-container');
+    const manualContainer = document.getElementById('manual-input-container');
+    const fileInput = document.getElementById('pdf-upload');
+
+    if (btnPdf) {
+      btnPdf.addEventListener('click', () => {
+        fileInput.click();
+      });
+    }
+
+    if (btnManual) {
+      btnManual.addEventListener('click', () => {
+        onboardingContainer.style.display = 'none';
+        manualContainer.style.display = 'block';
+      });
+    }
+  };
+
+  // 2. 점진적 공개 (Advanced Fields) 초기화
+  const initAdvancedToggles = () => {
+    const toggleBtns = document.querySelectorAll('.btn-toggle-advanced');
+    toggleBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const wrapper = e.target.nextElementSibling;
+        if (wrapper && wrapper.classList.contains('advanced-fields-wrapper')) {
+          const isHidden = wrapper.style.display === 'none';
+          wrapper.style.display = isHidden ? 'block' : 'none';
+          e.target.innerHTML = isHidden ? '➖ 사업/금융/기타 소득 및 추가 공제 접기 ▲' : '➕ 사업/금융/기타 소득 및 추가 공제 펼치기 ▼';
+        }
+      });
+    });
+  };
+
+  initOnboarding();
+  initAdvancedToggles();
+
   const parseVal = (idOrEl) => {
     const el = typeof idOrEl === 'string' ? document.getElementById(idOrEl) : idOrEl;
     if (!el) return 0;
@@ -141,8 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  let stepperCurrentStep = 1;
-  const STEP_BODIES = ['spouse-a-body', 'spouse-b-body', 'dependents-body'];
+
 
   function initStepSections() {
     document.querySelectorAll('.step-section-header').forEach(header => {
@@ -155,115 +194,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (arrow) arrow.textContent = body.classList.contains('collapsed') ? '▼' : '▲';
       });
     });
-
-    // Stepper navigation (P1)
-    initStepper();
   }
 
-  function initStepper() {
-    const steps = document.querySelectorAll('.stepper-step');
-    const connectors = document.querySelectorAll('.stepper-connector');
-    const prevBtn = document.getElementById('stepper-prev');
-    const nextBtn = document.getElementById('stepper-next');
-
-    // Click on stepper dot to navigate
-    steps.forEach(step => {
-      step.addEventListener('click', () => {
-        const targetStep = parseInt(step.dataset.step);
-        goToStep(targetStep);
-      });
-    });
-
-    if (prevBtn) prevBtn.addEventListener('click', () => goToStep(stepperCurrentStep - 1));
-    if (nextBtn) nextBtn.addEventListener('click', () => goToStep(stepperCurrentStep + 1));
-  }
-
-  function goToStep(targetStep) {
-    if (targetStep < 1 || targetStep > 3) return;
-    stepperCurrentStep = targetStep;
-
-    // Sync with Segmented Control
-    const segmentKeys = ['profile-a', 'profile-b', 'profile-dep'];
-    const targetGroup = segmentKeys[targetStep - 1];
-    
-    // Update Segmented Control Buttons
-    const profileSegmentBtns = document.querySelectorAll('.profile-segment-wrapper .segment-btn');
-    profileSegmentBtns.forEach(btn => {
-      const isTarget = btn.dataset.segment === targetGroup;
-      btn.classList.toggle('active', isTarget);
-      if (isTarget) {
-        btn.style.background = 'var(--accent-primary)';
-        btn.style.color = '#fff';
-      } else {
-        btn.style.background = 'transparent';
-        btn.style.color = 'var(--text-secondary-dark)';
-      }
-    });
-
-    // Update Profile Groups Display
-    const profileGroups = document.querySelectorAll('.profile-segment-group');
-    profileGroups.forEach(group => {
-      if (group.dataset.group === targetGroup) {
-        group.style.display = 'block';
-      } else {
-        group.style.display = 'none';
-      }
-    });
-
-    // Show/hide bodies
-    STEP_BODIES.forEach((id, idx) => {
-      const body = document.getElementById(id);
-      if (!body) return;
-      const stepNum = idx + 1;
-      if (stepNum === targetStep) {
-        body.classList.remove('stepper-hidden');
-        body.style.display = 'block';
-        body.classList.remove('collapsed');
-      } else {
-        body.classList.add('stepper-hidden');
-        body.style.display = 'none';
-      }
-    });
-
-    // Hide/show '부양가족 추가' button
-    const addDepBtn = document.getElementById('btn-add-couple-dep');
-    if (addDepBtn) {
-      addDepBtn.style.display = targetStep === 3 ? 'block' : 'none';
-    }
-
-    // Update stepper dots
-    const steps = document.querySelectorAll('.stepper-step');
-    const connectors = document.querySelectorAll('.stepper-connector');
-    steps.forEach((step, idx) => {
-      const stepNum = idx + 1;
-      step.classList.toggle('active', stepNum === targetStep);
-      step.classList.toggle('done', stepNum < targetStep);
-    });
-    connectors.forEach((conn, idx) => {
-      const connNum = idx + 1;
-      conn.classList.toggle('done', connNum < targetStep);
-    });
-
-    // Update nav buttons
-    const prevBtn = document.getElementById('stepper-prev');
-    const nextBtn = document.getElementById('stepper-next');
-    if (prevBtn) prevBtn.disabled = targetStep === 1;
-    if (nextBtn) {
-      if (targetStep === 3) {
-        nextBtn.textContent = '✅ 계산하기';
-        nextBtn.onclick = () => {
-          const btn = document.getElementById('btn-calc-income-integrated');
-          if (btn) btn.click();
-        };
-      } else {
-        nextBtn.textContent = '다음 ▶';
-        nextBtn.onclick = () => goToStep(targetStep + 1);
-      }
-    }
-
-    // Update breadcrumb
-    updateBreadcrumb('profile', targetGroup);
-  }
 
   function updateInputProgress() {
     const fields = [
@@ -1085,13 +1017,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Sync with Stepper
-      let stepNum = 1;
-      if (targetGroup === 'profile-b') stepNum = 2;
-      if (targetGroup === 'profile-dep') stepNum = 3;
-      if (stepperCurrentStep !== stepNum) {
-        goToStep(stepNum);
-      }
+      // Stepper sync removed as we now use segment controls exclusively
     });
   });
 
@@ -1705,23 +1631,54 @@ document.addEventListener('DOMContentLoaded', () => {
       monthlyRent: 0, studentLoanRepay: 0, localDonation: 0, ventureInvestment: d.aVentureInvestment
     }, { finalTax: aResult.totalTax });
     renderAdvice("income-advice-list", [...incomeAdvice, ...yearEndAdvice], (id, val) => {
-      if (id === "income_yellow_umbrella") { setAndFormatVal("inc-a-yellow", val); }
-      else if (id === "income_pension") { setAndFormatVal("inc-a-pension", val); }
-      else if (id === "income_venture_investment") { setAndFormatVal("inc-a-venture", val); }
-      else if (id === "income_isa_switch") { setAndFormatVal("inc-a-isa", val); setAndFormatVal("inc-a-financial-gen", Math.max(0, d.aFinancialGen - val)); }
+      let targetElement = null;
+      let targetTab = "profile"; // Default target tab
+
+      if (id === "income_yellow_umbrella") { setAndFormatVal("inc-a-yellow", val); targetElement = document.getElementById("inc-a-yellow"); }
+      else if (id === "income_pension") { setAndFormatVal("inc-a-pension", val); targetElement = document.getElementById("inc-a-pension"); }
+      else if (id === "income_venture_investment") { setAndFormatVal("inc-a-venture", val); targetElement = document.getElementById("inc-a-venture"); }
+      else if (id === "income_isa_switch") { 
+        setAndFormatVal("inc-a-isa", val); 
+        setAndFormatVal("inc-a-financial-gen", Math.max(0, d.aFinancialGen - val)); 
+        targetElement = document.getElementById("inc-a-isa"); 
+      }
       else if (id === "income_financial_split") {
-        const capitalTabBtn = document.querySelector('.tab-btn[data-tab="capital"]');
-        if (capitalTabBtn) capitalTabBtn.click();
+        targetTab = "capital";
         const optGsType = document.getElementById("opt-gs-type");
         if (optGsType) optGsType.value = "stock";
         setAndFormatVal("opt-gs-current", val * 25);
         setAndFormatVal("opt-gs-purchase", val * 15);
-        const targetSection = document.getElementById("opt-gs-type");
-        if (targetSection) targetSection.scrollIntoView({ behavior: "smooth", block: "center" });
-      } else if (id === "yearend_venture_invest") { setAndFormatVal("inc-a-venture", val); }
+        targetElement = document.getElementById("opt-gs-type");
+      } 
+      else if (id === "yearend_venture_invest") { setAndFormatVal("inc-a-venture", val); targetElement = document.getElementById("inc-a-venture"); }
       else if (id === "yearend_student_loan") {
         const el = document.querySelector("#inc-couple-ye-people .opt-dep-student-loan");
-        if (el) setAndFormatVal(el, val);
+        if (el) { setAndFormatVal(el, val); targetElement = el; }
+      }
+
+      // Switch to the appropriate tab
+      const tabBtn = document.querySelector(`.tab-btn[data-tab="${targetTab}"]`);
+      if (tabBtn) tabBtn.click();
+      
+      // Expand advanced fields wrapper if the target element is inside one
+      if (targetElement) {
+        const wrapper = targetElement.closest('.advanced-fields-wrapper');
+        if (wrapper && wrapper.style.display === 'none') {
+          wrapper.style.display = 'block';
+          const toggleBtn = wrapper.previousElementSibling;
+          if (toggleBtn && toggleBtn.classList.contains('btn-toggle-advanced')) {
+            toggleBtn.innerHTML = '➖ 사업/금융/기타 소득 및 추가 공제 접기 ▲';
+          }
+        }
+        targetElement.scrollIntoView({ behavior: "smooth", block: "center" });
+        targetElement.focus();
+        
+        // Add a brief highlight effect
+        targetElement.style.transition = 'background-color 0.5s ease';
+        targetElement.style.backgroundColor = 'rgba(0, 212, 170, 0.3)';
+        setTimeout(() => {
+          targetElement.style.backgroundColor = '';
+        }, 1500);
       }
     });
   }
