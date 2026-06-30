@@ -142,7 +142,7 @@
   <input class="form-input money-input" id="inc-a-other-expense" inputmode="numeric" type="text" value="0"/>
 </div>
 
-</div><!-- /advanced-fields-wrapper (Income) -->
+</div><!-- /advanced-fields-wrapper -->
 
 <button type="button" class="btn-toggle-advanced" data-label-type="deduction" style="width:100%; padding:10px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); color:var(--accent-gold); font-size:0.85rem; border-radius:8px; cursor:pointer; margin-bottom:1rem; transition:var(--transition-smooth);">➕ 추가 공제 항목 펼치기 ▼</button>
 
@@ -258,7 +258,7 @@
   <input class="form-input money-input" id="inc-b-other-expense" inputmode="numeric" type="text" value="0"/>
 </div>
 
-</div><!-- /advanced-fields-wrapper (Income) -->
+</div><!-- /advanced-fields-wrapper -->
 
 <button type="button" class="btn-toggle-advanced" data-label-type="deduction" style="width:100%; padding:10px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); color:var(--accent-gold); font-size:0.85rem; border-radius:8px; cursor:pointer; margin-bottom:1rem; transition:var(--transition-smooth);">➕ 추가 공제 항목 펼치기 ▼</button>
 
@@ -1212,10 +1212,8 @@
 <script src="app.js"></script>
 <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function (registrations) {
-        for (let registration of registrations) {
-          registration.unregister();
-        }
+      navigator.serviceWorker.register('service-worker.js').then(function () {
+        console.log('[SW] registered');
       }).catch(function () {});
     }
   </script>
