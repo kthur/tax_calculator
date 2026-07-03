@@ -50,6 +50,14 @@ jobs:
           name: android-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
 
+      - name: Upload to Firebase App Distribution
+        uses: wzieba/Firebase-App-Distribution@v2
+        with:
+          appId: ${{ secrets.FIREBASE_ANDROID_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_CREDENTIALS }}
+          groups: testers
+          file: android/app/build/outputs/apk/debug/app-debug.apk
+
   build-ios:
     name: Build iOS App
     runs-on: macos-latest
