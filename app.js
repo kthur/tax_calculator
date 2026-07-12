@@ -1080,6 +1080,8 @@ document.addEventListener('DOMContentLoaded', () => {
     bc.innerHTML = parts.join('');
   }
 
+  let isInternalFilterClick = false;
+
   const tabButtons = document.querySelectorAll('.nav-step-btn');
   const panels = document.querySelectorAll('.calculator-panel');
 
@@ -1098,6 +1100,20 @@ document.addEventListener('DOMContentLoaded', () => {
         targetPanel.classList.add('active');
       }
       updateBreadcrumb(btn.dataset.tab);
+
+      // Reset quick filter to 'all' when switching tabs manually
+      if (!isInternalFilterClick) {
+        const allChip = document.querySelector('.filter-chip[data-filter="all"]');
+        if (allChip) {
+          const filterChips = document.querySelectorAll('.filter-chip');
+          filterChips.forEach(c => c.classList.remove('active'));
+          allChip.classList.add('active');
+          const allCards = document.querySelectorAll('.input-card, .result-card, .category-section-header');
+          const allTreeLinks = document.querySelectorAll('.nav-tree-link');
+          allCards.forEach(c => c.classList.remove('dimmed'));
+          allTreeLinks.forEach(l => l.classList.remove('dimmed'));
+        }
+      }
     });
   });
 
@@ -4015,7 +4031,26 @@ function renderAdvice(containerId, adviceList, actionCallback) {
       chip.addEventListener('click', (e) => {
         filterChips.forEach(c => c.classList.remove('active'));
         chip.classList.add('active');
-        applyQuickFilter(chip.dataset.filter);
+        
+        const filter = chip.dataset.filter;
+        
+        // Map quick filter to target tab panel
+        let targetTab = 'profile'; // default for 'all'
+        if (filter === 'wage') targetTab = 'salary';
+        else if (filter === 'business') targetTab = 'business';
+        else if (filter === 'investment') targetTab = 'business';
+        else if (filter === 'property') targetTab = 'capital';
+        else if (filter === 'estate') targetTab = 'capital';
+        
+        // Trigger step button click to switch active tab
+        const topStepBtn = document.querySelector(`.nav-step-btn[data-tab="${targetTab}"]`);
+        if (topStepBtn) {
+          isInternalFilterClick = true;
+          topStepBtn.click();
+          isInternalFilterClick = false;
+        }
+        
+        applyQuickFilter(filter);
       });
     });
 
