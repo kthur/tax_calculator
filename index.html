@@ -331,54 +331,6 @@
 </div>
 
 </div><!-- /advanced-fields-wrapper -->
-
-<button type="button" class="btn-toggle-advanced" data-label-type="deduction" style="width:100%; padding:10px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); color:var(--accent-gold); font-size:0.85rem; border-radius:8px; cursor:pointer; margin-bottom:1rem; transition:var(--transition-smooth);">➕ 추가 공제 항목 펼치기 ▼</button>
-
-<div class="advanced-fields-wrapper" style="display:none; margin-bottom:1rem;">
-<div class="form-group">
-<label>노란우산공제 납입 <span class="tooltip-icon" data-tooltip="소기업·소상공인 공제(노란우산) 연간 납입액입니다. 500만 원 한도 내에서 소득공제됩니다.">?</span></label>
-<input class="form-input money-input" id="inc-a-yellow" inputmode="numeric" type="text" value=""/>
-</div>
-<div class="form-group">
-<label>연금저축 납입 <span class="tooltip-icon" data-tooltip="연금저축(펀드/신탁/보험) 연간 납입액입니다. 총급여에 따라 300만~600만 원 한도로 세액공제됩니다.">?</span></label>
-<input class="form-input money-input" id="inc-a-pension" inputmode="numeric" type="text" value=""/>
-</div>
-<div class="form-group">
-<label>IRP 추가 납입 <span class="tooltip-icon" data-tooltip="개인형퇴직연금(IRP) 추가 납입액입니다. 연금저축과 합산하여 최대 900만 원까지 세액공제됩니다.">?</span></label>
-<input class="form-input money-input" id="inc-a-irp" inputmode="numeric" type="text" value=""/>
-</div>
-<div class="form-group">
-<label>본인 의료비 지출액 <span class="tooltip-icon" data-tooltip="본인이 지출한 연간 의료비입니다. 의료비 세액공제는 총급여의 3% 초과 지출액부터 15% 공제 혜택이 적용됩니다.">?</span></label>
-<input class="form-input money-input" id="inc-a-medical" inputmode="numeric" type="text" value=""/>
-</div>
-<div class="section-label-group">
-  <div class="section-label-line"></div>
-  <span class="section-label-text">🚀 소득공제 및 세액공제</span>
-  <div class="section-label-line"></div>
-</div>
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
-<div class="form-group">
-<label style="font-size:0.7rem;">벤처기업 투자금액 <span class="tooltip-icon" data-tooltip="벤처기업 투자 시 투자금액의 100%~(최대 3,000만) 소득공제 또는 세액공제를 선택할 수 있습니다.">?</span></label>
-<input class="form-input money-input" id="inc-a-venture" inputmode="numeric" style="padding:6px; font-size:0.8rem;" type="text" value=""/>
-</div>
-<div class="form-group">
-<label style="font-size:0.7rem;">주택청약저축 납입 <span class="tooltip-icon" data-tooltip="주택청약종합저축 연간 납입액입니다. 총급여 7,000만 원 이하 시 소득공제 혜택이 있습니다.">?</span></label>
-<input class="form-input money-input" id="inc-a-housing-sub" inputmode="numeric" style="padding:6px; font-size:0.8rem;" type="text" value=""/>
-<label style="display:flex; align-items:center; gap:4px; font-size:0.68rem; margin-top:4px; cursor:pointer;">
-  <input type="checkbox" id="inc-a-is-householder" checked /> 무주택 세대주 여부
-</label>
-</div>
-</div>
-<div class="form-group" style="margin-bottom:0; margin-top:5px;">
-<label style="font-size:0.7rem;">전세대출 원리금상환액 <span class="tooltip-icon" data-tooltip="전세자금대출의 연간 원리금 상환액입니다. 주택 마련 공제 대상입니다.">?</span></label>
-<input class="form-input money-input" id="inc-a-housing-loan" inputmode="numeric" style="padding:6px; font-size:0.8rem;" type="text" value=""/>
-</div>
-<div class="form-group" style="margin-top:5px;">
-  <label style="display:flex; align-items:center; gap:4px; font-size:0.75rem; cursor:pointer;">
-    <input type="checkbox" id="inc-a-married-this-year" /> 올해 혼인신고 여부 (결혼 세액공제 50만 원)
-  </label>
-</div>
-</div><!-- /advanced-fields-wrapper -->
 </div>
 <div class="tax-danger-alert" id="spouse-a-income-warning" style="display:none; margin-top:10px; padding:10px; border-radius:8px; font-size:0.8rem; line-height:1.5;"></div>
 </div><!-- /spouse-a-body -->
@@ -455,49 +407,6 @@
 </div>
 
 </div><!-- /advanced-fields-wrapper -->
-
-<button type="button" class="btn-toggle-advanced" data-label-type="deduction" style="width:100%; padding:10px; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); color:var(--accent-gold); font-size:0.85rem; border-radius:8px; cursor:pointer; margin-bottom:1rem; transition:var(--transition-smooth);">➕ 추가 공제 항목 펼치기 ▼</button>
-
-<div class="advanced-fields-wrapper" style="display:none; margin-bottom:1rem;">
-<div class="form-group">
-<label>노란우산공제 납입 <span class="tooltip-icon" data-tooltip="소기업·소상공인 공제(노란우산) 연간 납입액입니다. 500만 원 한도 내에서 소득공제됩니다.">?</span></label>
-<input class="form-input money-input" id="inc-b-yellow" inputmode="numeric" type="text" value=""/>
-</div>
-<div class="form-group">
-<label>연금저축 납입 <span class="tooltip-icon" data-tooltip="연금저축(펀드/신탁/보험) 연간 납입액입니다. 총급여에 따라 300만~600만 원 한도로 세액공제됩니다.">?</span></label>
-<input class="form-input money-input" id="inc-b-pension" inputmode="numeric" type="text" value=""/>
-</div>
-<div class="form-group">
-<label>IRP 추가 납입 <span class="tooltip-icon" data-tooltip="개인형퇴직연금(IRP) 추가 납입액입니다. 연금저축과 합산하여 최대 900만 원까지 세액공제됩니다.">?</span></label>
-<input class="form-input money-input" id="inc-b-irp" inputmode="numeric" type="text" value=""/>
-</div>
-<div class="form-group">
-<label>본인 의료비 지출액 <span class="tooltip-icon" data-tooltip="본인이 지출한 연간 의료비입니다. 의료비 세액공제는 총급여의 3% 초과 지출액부터 15% 공제 혜택이 적용됩니다.">?</span></label>
-<input class="form-input money-input" id="inc-b-medical" inputmode="numeric" type="text" value=""/>
-</div>
-<div class="section-label-group">
-  <div class="section-label-line"></div>
-  <span class="section-label-text">🚀 소득공제 및 세액공제</span>
-  <div class="section-label-line"></div>
-</div>
-<div style="display:grid; grid-template-columns:1fr 1fr; gap:5px;">
-<div class="form-group">
-<label style="font-size:0.7rem;">벤처기업 투자금액 <span class="tooltip-icon" data-tooltip="벤처기업 투자 시 투자금액의 100%~(최대 3,000만) 소득공제 또는 세액공제를 선택할 수 있습니다.">?</span></label>
-<input class="form-input money-input" id="inc-b-venture" inputmode="numeric" style="padding:6px; font-size:0.8rem;" type="text" value=""/>
-</div>
-<div class="form-group">
-<label style="font-size:0.7rem;">주택청약저축 납입 <span class="tooltip-icon" data-tooltip="주택청약종합저축 연간 납입액입니다. 총급여 7,000만 원 이하 시 소득공제 혜택이 있습니다.">?</span></label>
-<input class="form-input money-input" id="inc-b-housing-sub" inputmode="numeric" style="padding:6px; font-size:0.8rem;" type="text" value=""/>
-</div>
-</div>
-<div class="form-group" style="margin-bottom:0; margin-top:5px;">
-<label style="font-size:0.7rem;">전세대출 원리금상환액 <span class="tooltip-icon" data-tooltip="전세자금대출의 연간 원리금 상환액입니다. 주택 마련 공제 대상입니다.">?</span></label>
-<input class="form-input money-input" id="inc-b-housing-loan" inputmode="numeric" style="padding:6px; font-size:0.8rem;" type="text" value=""/>
-</div>
-<div class="form-group" style="margin-top:5px;">
-  <label style="display:flex; align-items:center; gap:4px; font-size:0.75rem; cursor:pointer;">
-    <input type="checkbox" id="inc-b-married-this-year" /> 올해 혼인신고 여부 (결혼 세액공제 50만 원)
-  </label>
 </div>
 <div class="tax-danger-alert" id="spouse-b-income-warning" style="display:none; margin-top:10px; padding:10px; border-radius:8px; font-size:0.8rem; line-height:1.5;"></div>
 </div><!-- /spouse-b-body -->

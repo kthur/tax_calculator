@@ -1841,7 +1841,42 @@ document.addEventListener('DOMContentLoaded', () => {
     var aBizRev = parseVal("inc-a-business-revenue");
     var bBizRev = parseVal("inc-b-business-revenue");
     const isSpouseBEnabled = document.getElementById('enable-spouse-b')?.checked;
-    const aIsHouseholder = document.getElementById("inc-a-is-householder") ? document.getElementById("inc-a-is-householder").checked : true;
+    
+    // 2단계/3단계의 세부 계산기 필드에서 값 가져오기
+    const pensionTarget = document.getElementById("pension-target")?.value || "a";
+    const aPension = pensionTarget === "a" ? (parseVal("pension-amount") || 0) : 0;
+    const bPension = pensionTarget === "b" ? (parseVal("pension-amount") || 0) : 0;
+    const aIrp = pensionTarget === "a" ? (parseVal("pension-irp-amount") || 0) : 0;
+    const bIrp = pensionTarget === "b" ? (parseVal("pension-irp-amount") || 0) : 0;
+
+    const yellowTarget = document.getElementById("yellow-target")?.value || "a";
+    const aYellow = yellowTarget === "a" ? (parseVal("yellow-payment") || 0) : 0;
+    const bYellow = yellowTarget === "b" ? (parseVal("yellow-payment") || 0) : 0;
+
+    const medicalTarget = document.getElementById("medical-target")?.value || "a";
+    const aMedical = medicalTarget === "a" ? (parseVal("medical-amount") || 0) : 0;
+    const bMedical = medicalTarget === "b" ? (parseVal("medical-amount") || 0) : 0;
+
+    const housingTarget = document.getElementById("housing-target")?.value || "a";
+    const aHousingSub = housingTarget === "a" ? (parseVal("housing-sub-amount") || 0) : 0;
+    const bHousingSub = housingTarget === "b" ? (parseVal("housing-sub-amount") || 0) : 0;
+    const aSpouseHousingSub = housingTarget === "a" ? (parseVal("housing-spouse-sub-amount") || 0) : 0;
+    const bSpouseHousingSub = housingTarget === "b" ? (parseVal("housing-spouse-sub-amount") || 0) : 0;
+    
+    // 교차 매핑 보완: A가 세대주 청약 입력 시 B는 배우자 청약 납입으로 자동 교차
+    const finalAHousingSub = aHousingSub || bSpouseHousingSub;
+    const finalBHousingSub = bHousingSub || aSpouseHousingSub;
+
+    const aHousingLoan = housingTarget === "a" ? (parseVal("housing-jeonse-repay") || 0) : 0;
+    const bHousingLoan = housingTarget === "b" ? (parseVal("housing-jeonse-repay") || 0) : 0;
+
+    const ventureTarget = document.getElementById("venture-target")?.value || "a";
+    const aVenture = ventureTarget === "a" ? (parseVal("venture-amount") || 0) : 0;
+    const bVenture = ventureTarget === "b" ? (parseVal("venture-amount") || 0) : 0;
+
+    const marriedTarget = document.getElementById("marriage-target")?.value || "a";
+    const aMarried = marriedTarget === "a" ? (document.getElementById("marriage-this-year")?.checked || false) : false;
+    const bMarried = marriedTarget === "b" ? (document.getElementById("marriage-this-year")?.checked || false) : false;
 
     if (!isSpouseBEnabled) {
       return {
@@ -1852,10 +1887,10 @@ document.addEventListener('DOMContentLoaded', () => {
         aOtherRevenue: parseVal("inc-a-other-revenue"),
         aOtherExpense: parseVal("inc-a-other-expense"),
         aCard: parseVal("inc-a-card"),
-        aYellow: parseVal("inc-a-yellow"),
-        aPension: parseVal("inc-a-pension"),
-        aIrp: parseVal("inc-a-irp"),
-        aMedical: parseVal("inc-a-medical"),
+        aYellow: aYellow,
+        aPension: aPension,
+        aIrp: aIrp,
+        aMedical: aMedical,
         aFinancialGen: parseVal("inc-a-financial-gen"),
         aFinancialOverseas: parseVal("inc-a-financial-overseas"),
         aIsaIncome: parseVal("inc-a-isa"),
@@ -1879,13 +1914,15 @@ document.addEventListener('DOMContentLoaded', () => {
         bIsaType: 'general',
         bBondSeparated: 0,
         bType: 'wage',
-        aVentureInvestment: parseVal("inc-a-venture"),
-        aHousingSubscription: parseVal("inc-a-housing-sub"),
-        aHousingLoanRepay: parseVal("inc-a-housing-loan"),
-        aIsHouseholder: aIsHouseholder,
+        aVentureInvestment: aVenture,
+        aHousingSubscription: finalAHousingSub,
+        aHousingLoanRepay: aHousingLoan,
+        aIsHouseholder: true,
+        aMarriedThisYear: aMarried,
         bVentureInvestment: 0,
         bHousingSubscription: 0,
-        bHousingLoanRepay: 0
+        bHousingLoanRepay: 0,
+        bMarriedThisYear: false
       };
     }
 
@@ -1897,10 +1934,10 @@ document.addEventListener('DOMContentLoaded', () => {
       aOtherRevenue: parseVal("inc-a-other-revenue"),
       aOtherExpense: parseVal("inc-a-other-expense"),
       aCard: parseVal("inc-a-card"),
-      aYellow: parseVal("inc-a-yellow"),
-      aPension: parseVal("inc-a-pension"),
-      aIrp: parseVal("inc-a-irp"),
-      aMedical: parseVal("inc-a-medical"),
+      aYellow: aYellow,
+      aPension: aPension,
+      aIrp: aIrp,
+      aMedical: aMedical,
       aFinancialGen: parseVal("inc-a-financial-gen"),
       aFinancialOverseas: parseVal("inc-a-financial-overseas"),
       aIsaIncome: parseVal("inc-a-isa"),
@@ -1914,25 +1951,25 @@ document.addEventListener('DOMContentLoaded', () => {
       bOtherRevenue: parseVal("inc-b-other-revenue"),
       bOtherExpense: parseVal("inc-b-other-expense"),
       bCard: parseVal("inc-b-card"),
-      bYellow: parseVal("inc-b-yellow"),
-      bPension: parseVal("inc-b-pension"),
-      bIrp: parseVal("inc-b-irp"),
-      bMedical: parseVal("inc-b-medical"),
+      bYellow: bYellow,
+      bPension: bPension,
+      bIrp: bIrp,
+      bMedical: bMedical,
       bFinancialGen: parseVal("inc-b-financial-gen"),
       bFinancialOverseas: parseVal("inc-b-financial-overseas"),
       bIsaIncome: parseVal("inc-b-isa"),
       bIsaType: document.getElementById("inc-b-isa-type").value,
       bBondSeparated: parseVal("inc-b-bond"),
       bType: bBizRev > 0 ? 'business' : 'wage',
-      aVentureInvestment: parseVal("inc-a-venture"),
-      aHousingSubscription: parseVal("inc-a-housing-sub"),
-      aHousingLoanRepay: parseVal("inc-a-housing-loan"),
-      aIsHouseholder: aIsHouseholder,
-      aMarriedThisYear: document.getElementById("inc-a-married-this-year")?.checked || false,
-      bVentureInvestment: parseVal("inc-b-venture"),
-      bHousingSubscription: parseVal("inc-b-housing-sub"),
-      bHousingLoanRepay: parseVal("inc-b-housing-loan"),
-      bMarriedThisYear: document.getElementById("inc-b-married-this-year")?.checked || false
+      aVentureInvestment: aVenture,
+      aHousingSubscription: finalAHousingSub,
+      aHousingLoanRepay: aHousingLoan,
+      aIsHouseholder: true,
+      aMarriedThisYear: aMarried,
+      bVentureInvestment: bVenture,
+      bHousingSubscription: finalBHousingSub,
+      bHousingLoanRepay: bHousingLoan,
+      bMarriedThisYear: bMarried
     };
   }
 
@@ -3320,6 +3357,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       document.getElementById('sticky-tax-bar').style.display = 'flex';
+      const pensionTarget = document.getElementById('pension-target')?.value || 'a';
+      const aPension = pensionTarget === 'a' ? (parseVal('pension-amount') || 0) : 0;
+      const aIrp = pensionTarget === 'a' ? (parseVal('pension-irp-amount') || 0) : 0;
+      const ventureTarget = document.getElementById('venture-target')?.value || 'a';
+      const aVenture = ventureTarget === 'a' ? (parseVal('venture-amount') || 0) : 0;
       
       const aDeps = Array.from(optCoupleYePeople.querySelectorAll('.person-card')).filter(c => c.dataset.assigned === 'a' || !c.dataset.assigned);
       const aOptData = {
@@ -3330,12 +3372,12 @@ document.addEventListener('DOMContentLoaded', () => {
         traditionalMarket: parseVal('card-traditional'),
         publicTransit: parseVal('card-transit'),
         bookPerformance: parseVal('card-book'),
-        pensionSavings: parseVal('inc-a-pension'),
-        irpSavings: parseVal('inc-a-irp'),
+        pensionSavings: aPension,
+        irpSavings: aIrp,
         medicalExpense: parseVal('expense-revenue'),
         educationExpense: 0,
         monthlyRent: 0,
-        ventureInvestment: parseVal('venture-amount')
+        ventureInvestment: aVenture
       };
       const aResult = TaxCalculator.calculateYearEndTax(aOptData);
       const bar = document.getElementById('sticky-tax-amount');
@@ -3387,17 +3429,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const debouncedCapital  = debounce(() => { if (!isLoadingState) btnCalcCapital.click(); });
   const debouncedGiftSell = debounce(() => { if (!isLoadingState) btnCalcOptGs.click(); });
 
-  // 추가 공제 내역
+  // 추가 공제 내역 (실시간 자동 재계산 이벤트 바인딩)
   [
-    'inc-a-salary','inc-a-card','inc-a-yellow','inc-a-pension','inc-a-irp',
-    'inc-a-financial-gen','inc-a-financial-overseas','inc-a-isa','inc-a-isa-type','inc-a-bond',
+    'inc-a-salary','inc-a-card','inc-a-financial-gen','inc-a-financial-overseas','inc-a-isa','inc-a-isa-type','inc-a-bond',
     'inc-a-business-revenue','inc-a-business-expense','inc-a-pension-income','inc-a-other-revenue','inc-a-other-expense',
-    'inc-b-salary','inc-b-card','inc-b-yellow','inc-b-pension','inc-b-irp',
-    'inc-b-financial-gen','inc-b-financial-overseas','inc-b-isa','inc-b-isa-type','inc-b-bond',
+    'inc-b-salary','inc-b-card','inc-b-financial-gen','inc-b-financial-overseas','inc-b-isa','inc-b-isa-type','inc-b-bond',
     'inc-b-business-revenue','inc-b-business-expense','inc-b-pension-income','inc-b-other-revenue','inc-b-other-expense',
-    'inc-a-venture','inc-a-housing-sub','inc-a-housing-loan',
-    'inc-b-venture','inc-b-housing-sub','inc-b-housing-loan',
-    'inc-a-married-this-year', 'inc-b-married-this-year'
+    'pension-target', 'pension-amount', 'pension-irp-amount',
+    'yellow-target', 'yellow-payment',
+    'medical-target', 'medical-amount',
+    'housing-target', 'housing-sub-amount', 'housing-spouse-sub-amount', 'housing-jeonse-repay',
+    'venture-target', 'venture-amount',
+    'marriage-target', 'marriage-this-year',
+    'education-target', 'education-expense-input', 'student-loan-repay-input'
   ].forEach(id => {
     const el = document.getElementById(id);
     if (el) { el.addEventListener('input', debouncedIncome); el.addEventListener('change', debouncedIncome); }
