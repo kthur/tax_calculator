@@ -2844,7 +2844,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // 🎓 교육비 및 학자금 세액공제 계산기
+  // 💍 2025 혼인 특별 세액공제 계산기
+  const btnCalcMarriage = document.getElementById('btn-calc-marriage');
+  if (btnCalcMarriage) {
+    btnCalcMarriage.addEventListener('click', () => {
+      const target = document.getElementById('marriage-target').value;
+      const spouseName = target === 'a' ? '배우자 A' : '배우자 B';
+      const isMarried = document.getElementById('marriage-this-year')?.checked || false;
+
+      const credit = isMarried ? 500000 : 0;
+      const localTax = Math.floor(credit * 0.1);
+      const totalBenefit = credit + localTax;
+
+      const resDiv = document.getElementById('marriage-result');
+      const contentDiv = document.getElementById('marriage-result-content');
+      if (resDiv && contentDiv) {
+        resDiv.style.display = 'block';
+        if (isMarried) {
+          contentDiv.innerHTML = `
+            <div>공제 대상: <strong>${spouseName}</strong></div>
+            <div>올해 혼인신고: <strong>신고 완료 (세액감면 대상)</strong></div>
+            <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+            <div style="font-weight:bold;color:var(--accent-primary);font-size:0.95rem;">혼인 특별세액공제액: <strong>${credit.toLocaleString()} 원</strong></div>
+            <div style="color:var(--accent-warning);">지방소득세 환급분 (10%): ${localTax.toLocaleString()} 원</div>
+            <div style="font-weight:bold;color:var(--accent-secondary);font-size:1rem;">🎁 총 예상 환급 혜택: <strong>${totalBenefit.toLocaleString()} 원</strong></div>
+          `;
+        } else {
+          contentDiv.innerHTML = `
+            <div>공제 대상: <strong>${spouseName}</strong></div>
+            <div>올해 혼인신고: <strong>미신고</strong></div>
+            <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+            <div style="color:var(--text-secondary-dark);font-size:0.8rem;">올해 혼인신고를 완료하신 경우에 한하여 부부 1인당 50만 원의 특별세액공제 혜택이 적용됩니다.</div>
+          `;
+        }
+      }
+    });
+  }
   const btnCalcEduCredit = document.getElementById('btn-calc-education-credit');
   if (btnCalcEduCredit) {
     btnCalcEduCredit.addEventListener('click', () => {
@@ -3708,10 +3743,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // 📋 표준세액공제
   const progressInputs = [
     'inc-a-salary','inc-b-salary','inc-a-card','inc-b-card',
-    'inc-a-yellow','inc-b-yellow','inc-a-pension','inc-b-pension','inc-a-irp','inc-b-irp',
     'inc-a-financial-gen','inc-b-financial-gen','inc-a-financial-overseas','inc-b-financial-overseas',
-    'inc-a-isa','inc-b-isa','inc-a-bond','inc-b-bond',
-    'inc-a-venture','inc-b-venture','inc-a-housing-sub','inc-b-housing-sub','inc-a-housing-loan','inc-b-housing-loan'
+    'inc-a-isa','inc-b-isa','inc-a-bond','inc-b-bond'
   ];
   progressInputs.forEach(id => {
     const el = document.getElementById(id);
@@ -3742,7 +3775,9 @@ document.addEventListener('DOMContentLoaded', () => {
       'btn-calc-card-ratio',
       'btn-calc-expense-ratio',
       'btn-calc-gift-timeline',
-      'btn-calc-gift-tax'
+      'btn-calc-gift-tax',
+      'btn-calc-marriage',
+      'btn-calc-education-credit'
     ].forEach(id => {
       const btn = document.getElementById(id);
       if (btn) btn.click();

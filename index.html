@@ -984,6 +984,32 @@
   </div>
 </div>
 
+<!-- 💍 2025 혼인 특별 세액공제 계산기 -->
+<div class="input-card" style="margin-top: 1.5rem; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03);">
+  <h2 class="card-title">💍 2025 혼인 특별 세액공제</h2>
+  <div class="grid-2col" style="display:grid; gap:1.5rem;">
+    <div>
+      <div class="form-group">
+        <label>대상 선택</label>
+        <select id="marriage-target" class="form-input">
+          <option value="a">배우자 A</option>
+          <option value="b">배우자 B</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-top:5px; margin-bottom:12px;">
+        <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; cursor:pointer;">
+          <input type="checkbox" id="marriage-this-year" style="width:16px; height:16px; margin:0;" /> 올해 혼인신고 완료 여부
+        </label>
+      </div>
+      <button class="btn-primary" id="btn-calc-marriage" style="margin-top:0.5rem;">🎯 혼인공제 혜택 확인</button>
+    </div>
+    <div id="marriage-result" style="background:rgba(167,139,250,0.05); padding:1.5rem; border-radius:12px; display:none;">
+      <h4 style="font-weight:700; margin-bottom:8px; font-size:0.85rem;">📋 혼인 특별세액공제 분석 결과</h4>
+      <div id="marriage-result-content" style="font-size:0.82rem; line-height:1.6;"></div>
+    </div>
+  </div>
+</div>
+
 <!-- 🚗 전기차·친환경차 세액공제 계산기 -->
 <div class="input-card" style="margin-top: 1.5rem; background: rgba(255,255,255,0.01); border: 1px solid rgba(255,255,255,0.03);">
   <h2 class="card-title">🚗 전기차·친환경차 세액공제 계산기</h2>
