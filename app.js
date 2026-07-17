@@ -1928,9 +1928,11 @@ document.addEventListener('DOMContentLoaded', () => {
       aHousingSubscription: parseVal("inc-a-housing-sub"),
       aHousingLoanRepay: parseVal("inc-a-housing-loan"),
       aIsHouseholder: aIsHouseholder,
+      aMarriedThisYear: document.getElementById("inc-a-married-this-year")?.checked || false,
       bVentureInvestment: parseVal("inc-b-venture"),
       bHousingSubscription: parseVal("inc-b-housing-sub"),
-      bHousingLoanRepay: parseVal("inc-b-housing-loan")
+      bHousingLoanRepay: parseVal("inc-b-housing-loan"),
+      bMarriedThisYear: document.getElementById("inc-b-married-this-year")?.checked || false
     };
   }
 
@@ -2005,7 +2007,11 @@ document.addEventListener('DOMContentLoaded', () => {
       isaIncome: isA ? d.aIsaIncome : d.bIsaIncome,
       isaType: isA ? d.aIsaType : d.bIsaType,
       bondSeparated: isA ? d.aBondSeparated : d.bBondSeparated,
-      ventureInvestment: isA ? d.aVentureInvestment : d.bVentureInvestment
+      ventureInvestment: isA ? d.aVentureInvestment : d.bVentureInvestment,
+      isMarriedThisYear: isA ? d.aMarriedThisYear : d.bMarriedThisYear,
+      housingSubscription: isA ? d.aHousingSubscription : d.bHousingSubscription,
+      spouseHousingSubscription: isA ? d.bHousingSubscription : d.aHousingSubscription,
+      housingLoanRepay: isA ? d.aHousingLoanRepay : d.bHousingLoanRepay
     };
   }
 
@@ -2796,6 +2802,40 @@ document.addEventListener('DOMContentLoaded', () => {
           <div style="color:var(--accent-warning);">지방소득세 환급분: ${localTax.toLocaleString()} 원</div>
           <div style="font-weight:bold;color:var(--accent-secondary);font-size:1rem;">🎁 총 예상 환급 혜택: <strong>${totalBenefit.toLocaleString()} 원</strong></div>
           ${excessAmount <= 0 ? `<div style="margin-top:6px;padding:6px;background:rgba(255,107,107,0.08);border-radius:6px;font-size:0.78rem;color:var(--accent-warning);">⚠️ 지출하신 의료비가 총급여의 3% 문턱(${threshold.toLocaleString()}원) 이하이므로 환급 혜택이 발생하지 않습니다.</div>` : ''}
+        `;
+      }
+    });
+  }
+
+  // 🎓 교육비 및 학자금 세액공제 계산기
+  const btnCalcEduCredit = document.getElementById('btn-calc-education-credit');
+  if (btnCalcEduCredit) {
+    btnCalcEduCredit.addEventListener('click', () => {
+      const target = document.getElementById('education-target').value;
+      const totalSalary = getTargetSalary('education-target');
+      const eduExpense = parseVal('education-expense-input') || 0;
+      const studentLoan = parseVal('student-loan-repay-input') || 0;
+
+      // 교육비 세액공제: 15%
+      const eduCredit = Math.floor(eduExpense * 0.15);
+      // 학자금 원리금 상환 세액공제: 15%
+      const studentLoanCredit = Math.floor(studentLoan * 0.15);
+      const totalCredit = eduCredit + studentLoanCredit;
+      const localTax = Math.floor(totalCredit * 0.1);
+      const totalBenefit = totalCredit + localTax;
+
+      const resDiv = document.getElementById('education-result');
+      const contentDiv = document.getElementById('education-result-content');
+      if (resDiv && contentDiv) {
+        resDiv.style.display = 'block';
+        contentDiv.innerHTML = `
+          <div>연간 일반 교육비 지출액: <strong>${eduExpense.toLocaleString()} 원</strong> (공제액: ${eduCredit.toLocaleString()} 원)</div>
+          <div>학자금 대출 원리금 상환액: <strong>${studentLoan.toLocaleString()} 원</strong> (공제액: ${studentLoanCredit.toLocaleString()} 원)</div>
+          <hr style="border:none;border-top:1px solid rgba(255,255,255,0.06);margin:6px 0;">
+          <div>세액공제율: 15%</div>
+          <div style="font-weight:bold;color:var(--accent-primary);font-size:0.95rem;">교육비·학자금 합산 공제액: <strong>${totalCredit.toLocaleString()} 원</strong></div>
+          <div style="color:var(--accent-warning);">지방소득세 환급분: ${localTax.toLocaleString()} 원</div>
+          <div style="font-weight:bold;color:var(--accent-secondary);font-size:1rem;">🎁 총 예상 환급 혜택: <strong>${totalBenefit.toLocaleString()} 원</strong></div>
         `;
       }
     });
